@@ -1,0 +1,345 @@
+tr.even td
+{
+	background:LightGray;
+}
+
+tr.odd td
+{
+	background:LightBlue;
+}
+
+label.checkbox
+{
+	border-style:groove;
+	padding: 0px 5px;
+}
+
+span.error select
+{
+	background-color:Red;
+}
+
+span.error select.changed
+{
+	background-color:Orange;
+}
+
+select.changed
+{
+	background-color:Orange;
+}
+
+div.sql
+{
+	color:White;
+}
+
+div.messages
+{
+	margin:0px 0px 20px;
+	padding:10px 10px 10px;
+	background-color:LightGray;
+}
+
+input.nameid
+{
+	width:200px;
+}
+
+input.email
+{
+	width:120px;
+}
+
+/* NOTES TABLE */
+
+table.input td.flagged
+{
+	font-size:larger;
+	background-color:Pink;
+}
+
+table.input td.replaced
+{
+	background-color:rgba(230, 167, 236, 1);
+}
+
+table
+{
+	border-spacing:0px;
+}
+
+tr.header td
+{
+	font-weight:bold;
+}
+
+td.spacer
+{
+	width:100px;
+}
+
+/* REQUEST TABLE */
+
+table.requestcalendar
+{
+	border:0px;
+	table-layout:fixed;
+}
+
+table.requestcalendar td.hour
+{
+	background:white;
+	padding:0px;
+	width:50px;
+}
+
+table.requestcalendar td.weekend
+{
+	background:black;
+	padding:0px;
+	width:5px;
+}
+
+table.requestcalendar td
+{
+	padding:10px;
+	text-align:center;
+	height:50px;
+	width:75px;
+}
+
+table.requestcalendar td.scheduled
+{
+	background:gray;
+}
+
+table.requestcalendar td.requested
+{
+	background:lightgray;
+}
+
+table.requestcalendar td.walkin
+{
+	background:lightblue;
+}
+
+table.requestcalendar td.available
+{
+	background:plum;
+}
+
+table.requestcalendar div.event
+{
+	font-size:larger;
+}
+
+/* CALENDAR TABLE */
+
+table.calendar
+{
+	border:0px;
+	table-layout:fixed;
+	width:100%;
+}
+
+table.calendar td.hour
+{
+	background:white;
+	padding:0px;
+	width:50px;
+}
+
+table.calendar td.weekend
+{
+	background:black;
+	padding:0px;
+	width:5px;
+}
+
+table.calendar td
+{
+	padding:10px;
+	text-align:center;
+	height:50px;
+	width:150px;
+}
+
+table.calendar td.scheduled
+{
+	background:lightblue;
+}
+
+table.calendar td.requested
+{
+	background:red;
+}
+
+table.calendar td.walkin
+{
+	background:lightgreen;
+}
+
+table.calendar td.available
+{
+	background:plum;
+}
+
+table.calendar div.event
+{
+	font-size:larger;
+}
+
+/* STUDENT TABLE */
+
+table.input td
+{
+	background-color:LightBlue;
+	padding: 5px 10px 5px;
+	margin: 0px;
+}
+
+table.input td.alt
+{
+	background-color:LightSkyBlue;
+	padding: 5px 10px 5px;
+	margin: 0px;
+}
+
+table.input td.spacer
+{
+	width:100px;
+	background-color:White;
+}
+
+/* SCHEDULE TABLE  */
+
+table.schedule td
+{
+	padding:30px;
+	padding-top:0px;
+	text-align:left;
+	background-color:LightBlue;
+}
+
+table.schedule tr.header td
+{
+	padding-top:20px;
+	padding-bottom:0px;
+	font-weight:bold;
+}
+
+table.schedule tr.footer td
+{
+	padding-top:0px;
+	padding-bottom:20px;
+}
+
+table.schedule td.enrolled
+{
+	background-color: LightGreen;
+	padding:10px;
+	text-align:center;
+}
+
+table.schedule td.empty
+{
+	padding:10px;
+	text-align:center;
+}
+
+/* REQUIREMENTS TABLE */
+
+table.requirements td.taken
+{
+	padding:5px 30px 5px;
+	background-color:rgb(0,200,0);
+	text-align:center;
+}
+
+table.requirements td.untaken
+{
+	padding:5px 30px 5px;
+	background-color:rgb(200,0,0);
+	text-align:center;
+}
+
+table.requirements td.elective
+{
+	padding:5px 30px 5px;
+	background-color:rgb(0,200,200);
+	text-align:center;
+}
+
+body.print
+{
+	width: 7in;
+}
+
+body.print h1
+{
+	width:100%;
+	text-align:center;
+	font-size:16pt;
+	font-weight:bold;
+}
+
+body.print h2
+{
+	font-size:12pt;
+	font-weigth:bold;
+	border-top: 3px double #8c8b8b;
+	border-bottom: 3px double #8c8b8b;
+	text-align: center;
+}
+
+@media print
+{
+	.noprint
+	{
+		display:none;
+	}
+	
+}
+
+.firstpage
+{
+{
+	height: 9in;
+	display:block;
+	position:relative;
+/*	border:dashed; */
+}
+
+.page
+	page-break-before:always;
+	height: 9in;
+	display:block;
+	position:relative;
+/*	border:dashed; */
+}
+
+.signatures
+{
+	margin-top:30px;
+	position:absolute;
+	bottom:0px;
+	left:0px;
+}	
+
+body.print tr.header td
+{
+	padding-top:20px;
+	padding-bottom:5px;
+}
+
+body.print table
+{
+	width:100%;
+}
+
+body.print .tt
+{
+	font-family:monospace;
+	white-space:pre;
+}
