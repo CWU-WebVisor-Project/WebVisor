@@ -21,7 +21,7 @@
 	}
 	
 	$class_id = extract_int($_GET, 'id', extract_int($_POST, 'id', 0));
-	
+	$name = '';
 	if (isset($_POST['add_class']))
 	{
 		$name = $_POST['new_name'];
