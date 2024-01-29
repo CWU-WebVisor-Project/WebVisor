@@ -3,7 +3,7 @@
 //-----------------------------------------------------	
 //! DATABASE ACCESS
 //-----------------------------------------------------	
-
+	$link = null;
 	function add_sql_message($message)
 	{
 		global $PRINT_SQL;
@@ -18,19 +18,20 @@
 	}
 	
 	//! @todo https://stackoverflow.com/questions/1581610/how-can-i-store-my-users-passwords-safely
-	function get_user_info($login='', $password='', $database='', $setcookies = false)
+	function get_user_info($login='', $password='', $database='', $setcookies = true)
 	{
-		$master_login = 'advisor';
-		$master_password = 'password';
-		$database = 'advising';		
+		$master_login = 'root';
+		$master_password = '';
+		$database = 'scheduler';
+		global $link;
 
-		$link = mysql_connect('localhost', $master_login, $master_password);
+		$link = mysqli_connect('localhost', $master_login, $master_password, $database);
 		if (!$link)
 		{
 			add_message("Error: could not link to server, please contact Aaron.<br />");
 			return false;
 		}
-		$database_found = mysql_select_db($database, $link);
+		$database_found = mysqli_select_db($link, $database);
 		if (!$database_found)
 		{
 			add_message("Error: could not connect to database, please contact Aaron.<br />");
@@ -53,8 +54,8 @@
 				AND
 				password='$password'
 			;";
-		$query_result = my_query($query_string);
-		if (mysql_num_rows($query_result) == 0)
+		$query_result = my_query($query_string, false);
+		if (mysqli_num_rows($query_result) == 0)
 		{
 			return false;
 		}
@@ -66,16 +67,16 @@
 				setcookie('webvisor_login', $login, $one_year);
 				setcookie('webvisor_password', $password, $one_year);
 			}
-			return mysql_fetch_assoc($query_result);
+			return mysqli_fetch_assoc($query_result);
 		}
 	}
-	
+
 	function is_superuser($user_info)
 	{
 		global $YES;
 		return ($user_info['superuser'] == $YES);
 	}
-	
+
 	function update_user($user_id, $password, $name, $program_id)
 	{
 		$query_string = "
@@ -87,8 +88,8 @@
 			WHERE
 				id=$user_id
 			;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		if ($password != '')
 		{
 			$query_string = "
@@ -99,10 +100,10 @@
 				WHERE
 					id=$user_id
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 		}
 	}
-	
+
 	function all_users()
 	{
 		$query_string = "
@@ -113,75 +114,76 @@
 		ORDER BY
 			name ASC
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$users = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$user_id = $row['id'];
 			$name = $row['name'];
 			$users[$user_id] = $name;
 		}
-		
+
 		return $users;
 	}
-	
+
 	$PRINT_SQL = false;
 	$EXECUTE_SQL = true;
-	
+
 	function print_sql()
 	{
 		global $PRINT_SQL;
 		$PRINT_SQL = true;
 	}
-	
+
 	function noprint_sql()
 	{
 		global $PRINT_SQL;
 		$PRINT_SQL = false;
 	}
-		
+
 	function execute_sql()
 	{
 		global $EXECUTE_SQL;
 		$EXECUTE_SQL = true;
 	}
-		
+
 	function noexecute_sql()
 	{
 		global $EXECUTE_SQL;
 		$EXECUTE_SQL = false;
 	}
-		
+
 	function my_query($query_string, $print)
 	{
 		global $PRINT_SQL;
 		global $EXECUTE_SQL;
-		
+		global $link;
+
 		if ($print || $PRINT_SQL)
 		{
 			add_sql_message("$query_string");
 		}
-		
+
 		$result = false;
 		if ($EXECUTE_SQL)
 		{
-			$result = mysql_query($query_string);
+			$result = mysqli_query($link, $query_string);
 		}
-		
+
 		if (!$result && ($print || $PRINT_SQL))
 		{
-			$err_no = mysql_errno();
-			$err_str = mysql_error();
+			$err_no = mysqli_errno($link);
+			$err_str = mysqli_error($link);
 			add_sql_message("ERROR: $err_no: $err_str");
 		}
-		
+
 		return $result;
 	}
 
-//-----------------------------------------------------	
+//-----------------------------------------------------
 //! JOURNAL
-//-----------------------------------------------------	
+//-----------------------------------------------------
 
 	function get_journal($cleanup = false, $user_id = 0, $student_id = 0, $class_id = 0, $program_id = 0, $major_id = 0)
 	{
@@ -206,21 +208,20 @@
 		LIMIT
 			100;
 		";
-		
-		$query_result = my_query($query_string);
-		
+
+		$query_result = my_query($query_string, false);
+
 		$result = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$result[] = $row;
 		}
-				
 		return $result;
 	}
 
-//-----------------------------------------------------	
+//-----------------------------------------------------
 //! MAJORS
-//-----------------------------------------------------	
+//-----------------------------------------------------
 
 	function record_update($user_id, $note)
 	{
@@ -230,9 +231,9 @@
 			VALUES
 				($user_id, '$note')
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 	}
-	
+
 	function record_update_major($user_id, $major_id, $note)
 	{
 			$query_string = "
@@ -241,9 +242,9 @@
 			VALUES
 				($user_id, '$note', $major_id)
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 	}
-	
+
 	function record_update_program($user_id, $program_id, $note)
 	{
 			$query_string = "
@@ -252,9 +253,9 @@
 			VALUES
 				($user_id, $program_id, '$note')
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 	}
-	
+
 	function record_update_class($user_id, $class_id, $note)
 	{
 			$query_string = "
@@ -263,9 +264,9 @@
 			VALUES
 				($user_id, $class_id, '$note')
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 	}
-	
+
 	function record_update_student($user_id, $student_id, $note)
 	{
 			$query_string = "
@@ -274,12 +275,12 @@
 			VALUES
 				($user_id, $student_id, '$note')
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 	}
-	
-//-----------------------------------------------------	
+
+//-----------------------------------------------------
 //! MAJORS
-//-----------------------------------------------------	
+//-----------------------------------------------------
 
 	function all_majors()
 	{
@@ -291,40 +292,42 @@
 		ORDER BY
 			name
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$all_majors = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$all_majors[$row['id']] = $row['name'];
 		}
-		
+
 		return $all_majors;
 	}
-	
+
 	function add_major($user_id, $name, $active)
-	{		
+	{
+		global $link;
 		$query_string = "
 			INSERT INTO
 				Majors(name, active)
 			VALUES
 				('$name', '$active')
 			;";
-		$query_result = my_query($query_string);
-		
-		$major_id = mysql_insert_id();
-		
+		$query_result = my_query($query_string, false);
+
+		$major_id = mysqli_insert_id($link);
+
 		if ($major_id > 0)
 		{
 			$note = "<major:$major_id> added.";
-			record_update_major($user_id, $major, $note);
+			record_update_major($user_id, $major_id, $note);
 		}
-		
+
 		return $major_id;
 	}
-	
+
 	function update_major($user_id, $major_id, $name, $active)
-	{		
+	{
+		global $link;
 		$query_string = "
 			UPDATE
 				Majors
@@ -334,15 +337,15 @@
 			WHERE
 				id=$major_id
 			;";
-		$query_result = my_query($query_string);
+		$query_result = my_query($query_string, false);
 
-		if (mysql_affected_rows() > 0)
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "<major:$major_id> updated.";
 			record_update_major($user_id, $major_id, $note);
 		}
 	}
-	
+
 	function get_major_info($major_id)
 	{
 		$query_string = "
@@ -352,21 +355,21 @@
 			Majors
 		WHERE id=$major_id
 		;";
-		$query_result = my_query($query_string);
-		
-		$row = mysql_fetch_assoc($query_result);
+		$query_result = my_query($query_string, false);
+
+		$row = mysqli_fetch_assoc($query_result);
 		return $row;
 	}
-	
-//-----------------------------------------------------	
+
+//-----------------------------------------------------
 //! PROGRAMS
-//-----------------------------------------------------	
+//-----------------------------------------------------
 
 	function get_program_id($major_id, $catalog_year)
 	{
 		//! @bug should use $catalog_year and do a search based on first year program was offered
 		$catalog_year = 2017;
-		
+
 		$query_string = "
 		SELECT
 			id
@@ -377,12 +380,12 @@
 			AND
 			year=$catalog_year
 		;";
-		$query_result = my_query($query_string);
-		
-		$row = mysql_fetch_assoc($query_result);
+		$query_result = my_query($query_string, false);
+
+		$row = mysqli_fetch_assoc($query_result);
 		return $row['id'];
 	}
-	
+
 	function get_program_name($program_id)
 	{
 		$query_string = "
@@ -393,10 +396,10 @@
 		WHERE
 			Programs.id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		$row = mysql_fetch_assoc($query_result);
+		$query_result = my_query($query_string, false);
+		$row = mysqli_fetch_assoc($query_result);
 		$name = $row['name'];
-		
+
 		$query_string = "
 		SELECT 
 		";
@@ -406,6 +409,7 @@
 
 	function all_programs($user_id = 0)
 	{
+		global $link;
 		$query_string = "
 		SELECT
 			Programs.id,
@@ -418,14 +422,14 @@
 		ORDER BY
 			name
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$all_programs = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$all_programs[$row['id']] = $row['name']." (".$row['year'].")";
 		}
-		
+
 		if ($user_id != 0)
 		{
 			$query_string = "
@@ -438,21 +442,21 @@
 			ORDER BY
 				sequence DESC
 			;";
-			$query_result = mysql_query($query_string);
-			
+			$query_result = mysqli_query($link, $query_string);
+
 			$favorite_programs = array(-1 => '-');
-			while ($row = mysql_fetch_array($query_result))
+			while ($row = mysqli_fetch_array($query_result))
 			{
 				$favorite_programs = array($row['program_id'] => $all_programs[$row['program_id']]) + $favorite_programs;
 			}
-			
+
 			$all_programs = $favorite_programs + $all_programs;
-						
+
 		}
-		
+
 		return $all_programs;
 	}
-	
+
 	function get_program_info($program_id)
 	{
 		$query_string = "
@@ -463,12 +467,12 @@
 		WHERE
 			Programs.id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
-		$row = mysql_fetch_assoc($query_result);
+		$query_result = my_query($query_string, false);
+
+		$row = mysqli_fetch_assoc($query_result);
 		return $row;
 	}
-	
+
 	function get_program_roster($program_id)
 	{
 		$query_string = "
@@ -490,10 +494,10 @@
 		ORDER BY
 			Students.last, Students.first ASC
 		";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$result = array();
-		while (null != ($row = mysql_fetch_assoc($query_result)))
+		while (null != ($row = mysqli_fetch_assoc($query_result)))
 		{
 			$result[] = $row;
 		}
@@ -503,8 +507,9 @@
 
 	function add_program($user_id, $major_id, $year, $template_id)
 	{
+		global $link;
 		$program_id = 0;
-		
+
 		if ($template_id == 0)
 		{
 			$query_string = "
@@ -513,11 +518,11 @@
 			VALUES
 				($major_id, $year)
 			;";
-			
-			$query_result = my_query($query_string);
-			
-			$program_id = mysql_insert_id();
-			
+
+			$query_result = my_query($query_string, false);
+
+			$program_id = mysqli_insert_id($link);
+
 		}
 		else
 		{
@@ -531,10 +536,10 @@
 			WHERE
 				id=$template_id
 			;";
-			$query_result = my_query($query_string);
-			
-			$program_id = mysql_insert_id();
-			
+			$query_result = my_query($query_string, false);
+
+			$program_id = mysqli_insert_id($link);
+
 			$query_string = "
 			INSERT INTO
 				Checklists(program_id, sequence, name)		
@@ -545,8 +550,8 @@
 			WHERE
 				program_id=$template_id
 			;";
-			$query_result = my_query($query_string);
-			
+			$query_result = my_query($query_string, false);
+
 			$query_string = "
 			INSERT INTO
 				Program_Classes(program_id, class_id, minimum_grade, sequence_no, template_qtr, template_year, required)
@@ -557,8 +562,8 @@
 			WHERE
 				program_id=$template_id
 			;";
-			$query_result = my_query($query_string);
-			
+			$query_result = my_query($query_string, false);
+
 			$query_string = "
 			INSERT INTO
 				Replacement_Classes(program_id, required_id, replacement_id)
@@ -569,20 +574,21 @@
 			WHERE
 				program_id=$template_id
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 		}
-		
+
 		if ($program_id > 0)
 		{
 			$note = "Added <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
-		
+
 		return $program_id;
 	}
-	
+
 	function update_program($user_id, $program_id, $major_id, $year, $credits, $elective_credits, $active)
 	{
+		global $link;
 		$query_string = "
 		UPDATE
 			Programs
@@ -595,33 +601,34 @@
 		WHERE
 			id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+		$query_result = my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Updated <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
-		
+
 		//! @todo update electives!
-		
+
 	}
-	
+
 	function update_program_classes($user_id, $program_id, $core_ids, $required_ids, $required_grades, $sequence_numbers)
 	{
 		global $YES;
 		global $NO;
-		
+		global $link;
+
 		$changes = 0;
-		
+
 		$query_string = "
 		DELETE FROM
 			Program_Classes
 		WHERE
 			program_id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		foreach($core_ids as $class_id)
 		{
 			$query_string = "
@@ -630,11 +637,11 @@
 			VALUES
 				($program_id, $class_id, '$NO')
 			;";
-			$query_result = my_query($query_string);
-			
-			$changes += mysql_affected_rows();
+			$query_result = my_query($query_string, false);
+
+			$changes += mysqli_affected_rows($link);
 		}
-		
+
 		foreach ($required_ids as $required_id)
 		{
 			$query_string = "
@@ -645,10 +652,10 @@
 				AND
 				class_id=$required_id
 			;";
-			$query_result = my_query($query_string);
-			$changes += mysql_affected_rows();
+			$query_result = my_query($query_string, false);
+			$changes += mysqli_affected_rows($link);
 		}
-		
+
 		foreach ($required_grades as $class_id => $minimum_grade)
 		{
 			if ($minimum_grade > 0)
@@ -662,12 +669,12 @@
 					AND
 					class_id=$class_id
 				;";
-				
-				$query_result = my_query($query_string);
-				$changes += mysql_affected_rows();
+
+				$query_result = my_query($query_string, false);
+				$changes += mysqli_affected_rows($link);
 			}
 		}
-		
+
 		foreach ($sequence_numbers as $class_id => $seqno)
 		{
 			$query_string = "
@@ -679,11 +686,11 @@
 				AND
 				class_id=$class_id
 			;";
-		
-			$query_result = my_query($query_string);
-			$changes += mysql_affected_rows();
+
+			$query_result = my_query($query_string, false);
+			$changes += mysqli_affected_rows($link);
 		}
-		
+
 		if ($changes > 0)
 		{
 			$note = "Updated <program:$program_id> classes.";
@@ -695,7 +702,7 @@
 	function get_required_classes($program_id)
 	{
 		global $YES;
-		
+
 		$required_classes = array();
 		$query_string = "
 		SELECT
@@ -713,19 +720,19 @@
 		ORDER BY
 			Classes.name ASC
 		;";
-		$result = my_query($query_string);
-				
-		$num_rows = mysql_num_rows($result);
+		$result = my_query($query_string, false);
+
+		$num_rows = mysqli_num_rows($result);
 		for ($i = 0; $i < $num_rows; ++$i)
 		{
-			$row = mysql_fetch_assoc($result);
+			$row = mysqli_fetch_assoc($result);
 			$id = $row['id'];
 			$required_classes[$id] = $row;
 		}
 
 		return $required_classes;
 	}
-	
+
 	function get_program_classes($program_id)
 	{
 		$program_classes = array();
@@ -744,38 +751,40 @@
 		ORDER BY
 			sequence_no, name ASC
 		;";
-		$result = my_query($query_string);
-				
-		$num_rows = mysql_num_rows($result);
+		$result = my_query($query_string, false);
+
+		$num_rows = mysqli_num_rows($result);
 		for ($i = 0; $i < $num_rows; ++$i)
 		{
-			$row = mysql_fetch_assoc($result);
+			$row = mysqli_fetch_assoc($result);
 			$id = $row['id'];
 			$program_classes[$id] = $row;
 		}
 
 		return $program_classes;
 	}
-	
+
 	function add_replacement($user_id, $program_id, $replaced_id, $replacement_id)
 	{
+		global $link;
 		$query_string = "
 		INSERT INTO
 			Replacement_Classes(program_id, required_id, replacement_id)
 		VALUES
 			($program_id, $replaced_id, $replacement_id)
 		;";
-		my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+		my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Added <replacement:$replacement_id> as replacement for <replaced:$replaced_id> in <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
 	}
-	
+
 	function remove_replacement($program_id, $replaced_id, $replacement_id)
 	{
+		global $link;
 		$query_string = "
 		DELETE FROM Replacement_Classes
 		WHERE
@@ -785,15 +794,15 @@
 			AND
 			replacement_id = $replacement_id
 		;";
-		my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+		my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Removed <replacement:$replacement_id> as replacement for <replaced:$replaced_id> in <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
 	}
-	
+
 	function get_replacement_classes($program_id)
 	{
 		$replacement_classes = array();
@@ -809,12 +818,12 @@
 		WHERE
 			Replacement_Classes.program_id=$program_id
 		;";
-		$result = my_query($query_string);
-		
-		$num_rows = mysql_num_rows($result);
+		$result = my_query($query_string, false);
+
+		$num_rows = mysqli_num_rows($result);
 		for ($i = 0; $i < $num_rows; ++$i)
 		{
-			$row = mysql_fetch_assoc($result);
+			$row = mysqli_fetch_assoc($result);
 			$required_id = $row['required_id'];
 			$required_name = $row['required_name'];
 			$replacement_id = $row['replacement_id'];
@@ -827,10 +836,10 @@
 			}
 			$replacement_classes[$required_id]['replacements'][] = array('id' => $replacement_id, 'name' => $replacement_name, 'note' => $note);
 		}
-		
+
 		return $replacement_classes;
 	}
-	
+
 	function get_checklist($program_id)
 	{
 		$checklist = array();
@@ -845,23 +854,24 @@
 		ORDER BY
 			sequence ASC
 		;";
-		$query_result = my_query($query_string);
-		
-		while ($row = mysql_fetch_assoc($query_result))
+		$query_result = my_query($query_string, false);
+
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$checklist[$row['id']] = $row;
 		}
-		
+
 		return $checklist;
 	}
-	
+
 	function update_checklist_sequence($user_id, $program_id, $checklist_items)
 	{
+		global $link;
 		$changes = 0;
-		
+
 		asort($checklist_items);
 		$max_checklist_count = 1000;
-		
+
 		$query_string = "
 			UPDATE
 				Checklists
@@ -870,9 +880,9 @@
 			WHERE
 				program_id=$program_id
 			;";
-		$query_result = my_query($query_string);
-		$changes += mysql_affected_rows();
-		
+		$query_result = my_query($query_string, false);
+		$changes += mysqli_affected_rows($link);
+
 		$i = 1;
 		foreach ($checklist_items as $id => $sequence)
 		{
@@ -886,30 +896,31 @@
 				WHERE
 					id=$id
 				;";
-				$query_result = my_query($query_string);
-				$changes += mysql_affected_rows();
+				$query_result = my_query($query_string, false);
+				$changes += mysqli_affected_rows($link);
 				++$i;
 			}
 		}
-		
+
 		$query_string = "
 			DELETE FROM
 				Checklists
 			WHERE
 				sequence > $max_checklist_count
 			;";
-			$query_result = my_query($query_string);
-			$changes += mysql_affected_rows();
-			
+			$query_result = my_query($query_string, false);
+			$changes += mysqli_affected_rows($link);
+
 		if ($changes > 0)
 		{
 			$note = "Updated <checklist:$checklist_id> for <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
 	}
-	
+
 	function add_checklist_item($user_id, $program_id, $name)
 	{
+		global $link;
 		$query_string = "
 			SELECT
 				COUNT(id) AS count
@@ -918,29 +929,29 @@
 			WHERE
 				program_id=$program_id
 			;";
-		$query_result = my_query($query_string);
-		$row = mysql_fetch_assoc($query_result);
+		$query_result = my_query($query_string, false);
+		$row = mysqli_fetch_assoc($query_result);
 		$count = $row['count'];
 		$sequence = $count + 1;
-		
+
 		$query_string = "
 			INSERT INTO
 				Checklists(program_id, name, sequence)
 			VALUES
 				($program_id, '$name', $sequence)
 			;";
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+		$query_result = my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Added item to <checklist:$checklist_id> for <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
 	}
-	
-//-----------------------------------------------------	
+
+//-----------------------------------------------------
 //! TEMPLATE
-//-----------------------------------------------------	
+//-----------------------------------------------------
 
 	function get_templates($program_id)
 	{
@@ -952,21 +963,21 @@
 		WHERE
 			program_id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$templates = array();
-		$num_rows = mysql_num_rows($query_result);
+		$num_rows = mysqli_num_rows($query_result);
 		for ($i = 0; $i < $num_rows; ++$i)
 		{
-			$row = mysql_fetch_array($query_result);
+			$row = mysqli_fetch_array($query_result);
 			$id = $row['id'];
 			$name = $row['name'];
 			$templates[$id] = $name;
 		}
-		
+
 		return $templates;
 	}
-	
+
 	function get_named_templates($program_id)
 	{
 		$query_string = "
@@ -979,33 +990,34 @@
 			AND
 			name != '** New **'
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$templates = array();
-		$num_rows = mysql_num_rows($query_result);
+		$num_rows = mysqli_num_rows($query_result);
 		for ($i = 0; $i < $num_rows; ++$i)
 		{
-			$row = mysql_fetch_array($query_result);
+			$row = mysqli_fetch_array($query_result);
 			$id = $row['id'];
 			$name = $row['name'];
 			$templates[$id] = $name;
 		}
-		
+
 		return $templates;
 	}
-	
+
 	function create_template($user_id, $program_id, $name, $mimic_id)
 	{
+		global $link;
 		$query_string = "
 			INSERT INTO
 				Templates(program_id, name)
 			VALUES
 				($program_id, '$name')
 			;";
-		$query_result = my_query($query_string);
-		
-		$template_id = mysql_insert_id();
-		
+		$query_result = my_query($query_string, false);
+
+		$template_id = mysqli_insert_id($link);
+
 		if ($mimic_id != 0)
 		{
 			$query_string = "
@@ -1018,18 +1030,18 @@
 				WHERE
 					template_id=$mimic_id
 				;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 		}
-		
+
 		if ($template_id > 0)
 		{
 			$note = "Created <template:$template_id> for <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
-		
+
 		return $template_id;
 	}
-	
+
 	function get_template_info($template_id)
 	{
 		$query_string = "
@@ -1041,12 +1053,12 @@
 			WHERE
 				id=$template_id
 			;";
-		$query_result = my_query($query_string);
-		$row = mysql_fetch_assoc($query_result);
-		
+		$query_result = my_query($query_string, false);
+		$row = mysqli_fetch_assoc($query_result);
+
 		return $row;
 	}
-	
+
 	function get_template_classes($template_id)
 	{
 		$query_string = "
@@ -1059,13 +1071,13 @@
 			WHERE
 				template_id = $template_id
 			;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$template_classes = array();
-		$num_rows = mysql_num_rows($query_result);
+		$num_rows = mysqli_num_rows($query_result);
 		for ($i = 0; $i < $num_rows; ++$i)
 		{
-			$row = mysql_fetch_assoc($query_result);
+			$row = mysqli_fetch_assoc($query_result);
 			$class_id = $row['class_id'];
 			$template_classes[$class_id] = $row;
 		}
@@ -1084,16 +1096,16 @@
 			WHERE
 				id=$template_id
 			;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$query_string = "
 			DELETE FROM
 				Template_Classes
 			WHERE
 				template_id = $template_id
 			;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		foreach ($template as $class_id => $qtr_year)
 		{
 			$qtr = $qtr_year["qtr"];
@@ -1107,17 +1119,17 @@
 					quarter=$qtr,
 					year=$year
 				;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 		}
 	}
 
-//-----------------------------------------------------	
+//-----------------------------------------------------
 //! CLASS
-//-----------------------------------------------------	
+//-----------------------------------------------------
 
 /*
 	A class has the following properties
-	
+
 	- name (e.g., MATH 153)
 	- title (e.g., Precalculus I)
 	- credits (e.g., 5)
@@ -1126,11 +1138,11 @@
 	- winter (e.g., Yes)
 	- spring (e.g., Yes)
 	- summer (e.g., Yes)
-	
+
 	these are passed around as a "class_info" array
-	
+
 	*/
-	
+
 	// list of all classes in an array of the form id => name
 	// primarily useful for creating menus of all classes
 	// if $program_id is not 0, we list required classes first
@@ -1138,7 +1150,7 @@
 	function all_classes($program_id = 0)
 	{
 		$all_classes = array();
-		
+
 		if ($program_id != 0)
 		{
 			// $program_id != 0
@@ -1154,9 +1166,9 @@
 				Program_Classes.program_id=$program_id
 			ORDER BY
 				active, seqno, name ASC";
-			
-			$query_result = my_query($query_string);
-			while ($row = mysql_fetch_assoc($query_result))
+
+			$query_result = my_query($query_string, false);
+			while ($row = mysqli_fetch_assoc($query_result))
 			{
 				$id = $row['id'];
 				$name = $row['name'];
@@ -1166,7 +1178,7 @@
 				}
 				$all_classes[$id] = $name;
 			}
-			
+
 			$query_string = "
 			SELECT
 				Classes.id,
@@ -1178,8 +1190,8 @@
 				name ASC
 				;";
 
-			$query_result = my_query($query_string);
-			while ($row = mysql_fetch_assoc($query_result))
+			$query_result = my_query($query_string, false);
+			while ($row = mysqli_fetch_assoc($query_result))
 			{
 				$id = $row['id'];
 				if (!array_key_exists($id, $all_classes))
@@ -1207,8 +1219,8 @@
 				name ASC
 				;";
 
-			$query_result = my_query($query_string);
-			while ($row = mysql_fetch_assoc($query_result))
+			$query_result = my_query($query_string, false);
+			while ($row = mysqli_fetch_assoc($query_result))
 			{
 				$id = $row['id'];
 				$name = $row['name'];
@@ -1219,34 +1231,36 @@
 				$all_classes[$id] = $name;
 			}
 		}
-		
+
 		return $all_classes;
 	}
-	
+
 	// creates the class and returns the class id of the new class
 	function add_class($user_id, $name, $credits, $title='', $fall='$NO', $winter='$NO', $spring='$NO', $summer='$NO')
 	{
+		global $link;
 		$query_string = "
 		INSERT INTO Classes
 			(name, title, credits, fall, winter, spring, summer)
 		VALUES
 			('$name', '$title', $credits, '$fall', '$winter', '$spring', '$summer')
 		;";
-		$result = my_query($query_string);
-		
-		$class_id = mysql_insert_id();
-		
+		$result = my_query($query_string, false);
+
+		$class_id = mysqli_insert_id($link);
+
 		if ($class_id > 0)
 		{
 			$note = "<class:$class_id> added.";
 			record_update_class($user_id, $class_id, $note);
 		}
-		
+
 		return $class_id;
 	}
-	
+
 	function update_class($user_id, $class_id, $name, $title, $credits, $fall, $winter, $spring, $summer, $active)
 	{
+		global $link;
 		$query_string = "
 		UPDATE
 			Classes
@@ -1262,16 +1276,16 @@
 		WHERE
 			id=$class_id
 			;";
-		
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+
+		$query_result = my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Updated <class:$class_id>.";
 			record_update_class($user_id, $class_id, $note);
 		}
 	}
-	
+
 	function update_prereqs($class_id, $prereq_ids, $required_grades)
 	{
 		$query_string = "
@@ -1280,8 +1294,8 @@
 		WHERE
 			class_id=$class_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		foreach($prereq_ids as $prereq_id)
 		{
 			$query_string = "
@@ -1290,9 +1304,9 @@
 			VALUES
 				($class_id, $prereq_id)
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 		}
-		
+
 		foreach ($required_grades as $prereq_id => $minimum_grade)
 		{
 			if ($minimum_grade > 0)
@@ -1303,12 +1317,12 @@
 				VALUES
 					($class_id, $prereq_id, $minimum_grade)
 				;";
-				
-				$query_result = my_query($query_string);
+
+				$query_result = my_query($query_string, false);
 			}
 		}
 	}
-	
+
 	function get_prereqs($class_id)
 	{
 		$query_string = "
@@ -1322,20 +1336,24 @@
 		WHERE
 			Prerequisites.class_id = $class_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$prereqs = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$prereqs[$row['prerequisite_id']] = $row;
 		}
-		
+
 		return $prereqs;
 	}
-	
+
 	// returns the class info of the class
 	function get_class_info($id, $program_id=0)
 	{
+		if ($id == null || !is_numeric($id)) {
+			// Handle invalid $id, perhaps return null or throw an exception
+			return null;
+		}
 		$query_string = "
 		SELECT
 			id, name, title, credits, fall, winter, spring, summer, active
@@ -1344,7 +1362,7 @@
 		WHERE
 			Classes.id=$id
 			;";
-		
+/*
 		if ($program_id != 0)
 		{
 			$query_string = "
@@ -1358,9 +1376,9 @@
 				Classes.id=$id
 			;";
 		}
-			
-		$query_result = my_query($query_string);
-		return mysql_fetch_assoc($query_result);
+*/
+		$query_result = my_query($query_string, false);
+		return mysqli_fetch_assoc($query_result);
 	}
 
 	// $result['catalog_year']['catalog_term'] = array of students in the course that term
@@ -1368,7 +1386,7 @@
 	function get_class_rosters($id)
 	{
 		$rosters = array();
-		
+
 		$query_string = "
 		SELECT
 			term,
@@ -1383,9 +1401,9 @@
 		ORDER BY
 			term
 			;";
-		$result = my_query($query_string);
+		$result = my_query($query_string, false);
 		$term_ids = array();
-		while($row = mysql_fetch_assoc($result))
+		while($row = mysqli_fetch_assoc($result))
 		{
 			$term_id = $row['term'];
 			$catalog_year = substr($term_id, 0, 4);
@@ -1400,14 +1418,14 @@
 			}
 			$rosters[$catalog_year][$catalog_term][] = $row['student_id'];
 		}
-		
+
 		return $rosters;
 	}
-	
+
 	function get_class_roster($class_id, $term)
 	{
 		$rosters = array();
-		
+
 		$query_string = "
 		SELECT
 			CONCAT(Students.last, ', ', Students.first) AS name,
@@ -1424,20 +1442,20 @@
 		ORDER BY
 			Students.last, Students.first ASC
 			;";
-		
-		$query_result = my_query($query_string);
+
+		$query_result = my_query($query_string, false);
 		$roster = array();
-		while($row = mysql_fetch_assoc($query_result))
+		while($row = mysqli_fetch_assoc($query_result))
 		{
 			$roster[] = $row;
 		}
 		return $roster;
 	}
-			
+
 	function get_class_intersections($class_id, $term)
 	{
 		global $YES;
-		
+
 		$sql_result = my_query("SELECT DISTINCT
 			Classes.id,
 			Classes.name,
@@ -1464,22 +1482,22 @@
 			AND
 			Hub.class_id != Spoke.class_id
 		GROUP BY
-			Classes.name;");
-			
+			Classes.name;", false);
+
 		$result = array();
-		while ($row = mysql_fetch_assoc($sql_result))
+		while ($row = mysqli_fetch_assoc($sql_result))
 		{
 			$result[$row['id']] = $row;
 		}
-					
+
 		return $result;
-		
+
 	}
-	
+
 	function get_class_conflicts($class1_id, $class2_id, $term)
 	{
 		global $YES;
-		
+
 		$sql_result = my_query("SELECT DISTINCT
 			Students.id,
 			Students.cwu_id,
@@ -1503,21 +1521,21 @@
 			Students.active='$YES'
 			AND
 			Students.id=First.student_id
-		ORDER BY last, first ASC;");
-		
+		ORDER BY last, first ASC;", false);
+
 		$result = array();
-		while ($row = mysql_fetch_assoc($sql_result))
+		while ($row = mysqli_fetch_assoc($sql_result))
 		{
 			$result[$row['id']] = $row;
 		}
-		
+
 		return $result;
 	}
-	
-//-----------------------------------------------------	
+
+//-----------------------------------------------------
 //! STUDENTS
-//-----------------------------------------------------	
-	
+//-----------------------------------------------------
+
 	function user_can_update_student($user_id, $student_id)
 	{
 		$query_string = "
@@ -1530,11 +1548,11 @@
 			AND
 			student_id=$student_id
 		;";
-		$query_result = my_query($query_string);
-		
-		return (mysql_num_rows($query_result) > 0);	
+		$query_result = my_query($query_string, false);
+
+		return (mysqli_num_rows($query_result) > 0);
 	}
-	
+
 	function programs_with_student($student_id)
 	{
 		$query_string = "
@@ -1554,17 +1572,17 @@
 			Majors.name,
 			Programs.year
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$programs = array();
-		while($row = mysql_fetch_assoc($query_result))
+		while($row = mysqli_fetch_assoc($query_result))
 		{
 			$programs[$row['program_id']] = $row;
 		}
-		
+
 		return $programs;
 	}
-	
+
 	function student_in_program($student_id, $program_id)
 	{
 		$query_string = "
@@ -1577,13 +1595,14 @@
 			AND
 			program-id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
-		return (mysql_num_rows($query_result) > 0);
+		$query_result = my_query($query_string, false);
+
+		return (mysqli_num_rows($query_result) > 0);
 	}
-	
+
 	function find_user($cwu_id, $email, $first, $last)
 	{
+		global $link;
 		$id = 0;
 		if ($cwu_id != '')
 		{
@@ -1605,9 +1624,9 @@
 			WHERE
 				email='$email';";
 		}
-		$result = my_query($query_string);
-		
-		if (mysql_num_rows($result) == 0)
+		$result = my_query($query_string, false);
+
+		if (mysqli_num_rows($result) == 0)
 		{
 			if ($cwu_id != 0 || $email != '')
 			{
@@ -1620,8 +1639,8 @@
 					Students(cwu_id, email, first, last)
 				VALUES
 					($cwu_id, '$email', '$first', '$last');";
-				$result = my_query($query_string);
-				$id = mysql_insert_id();
+				$result = my_query($query_string, false);
+				$id = mysqli_insert_id($link);
 			}
 			else
 			{
@@ -1630,14 +1649,14 @@
 		}
 		else
 		{
-			$row = mysql_fetch_assoc($result);
+			$row = mysqli_fetch_assoc($result);
 			$id = $row['id'];
 		}
 		return $id;
 	}
 
 	function cwu_id_to_student_id($cwu_id)
-	{		
+	{
 		$query_string = "
 		SELECT
 			COALESCE(id,0) AS id
@@ -1646,14 +1665,14 @@
 		WHERE
 			cwu_id=$cwu_id
 		;";
-		$query_result = my_query($query_string);
-		$row = mysql_fetch_assoc($query_result);
-		
+		$query_result = my_query($query_string, false);
+		$row = mysqli_fetch_assoc($query_result);
+
 		return $row['id'];
 	}
 
 	function get_student_info($id, $cwu_id=0, $email='')
-	{	
+	{
 		$student_info = array();
 		if ($id != 0)
 		{
@@ -1667,7 +1686,7 @@
 		{
 			$where = "Students.email='$email'";
 		}
-		
+
 		$query_string = "
 		SELECT
 			id, cwu_id, CONCAT(first, ' ', last) AS name, email, first, last, active, phone, address, postbaccalaureate, non_stem_majors, withdrawing, veterans_benefits
@@ -1676,9 +1695,9 @@
 		WHERE
 			$where
 			;";
-		$query_result = my_query($query_string);
-		$info = mysql_fetch_assoc($query_result);
-		
+		$query_result = my_query($query_string, false);
+		$info = mysqli_fetch_assoc($query_result);
+/*
 		$query_string = "
 			SELECT
 				Majors.name
@@ -1687,19 +1706,19 @@
 			WHERE
 				$where
 			;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$program_array = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$program_array[] = $row['name'];
 		}
-		
+
 		$info['math_majors'] = implode(", ", $program_array);
-		
+*/
 		return $info;
 	}
-	
+
 	function get_student_program_advisor($student_id, $program_id)
 	{
 		$query_string = "
@@ -1715,13 +1734,14 @@
 			AND
 			Student_Programs.program_id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
-		return mysql_fetch_assoc($query_result);
+		$query_result = my_query($query_string, false);
+
+		return mysqli_fetch_assoc($query_result);
 	}
-	
+
 	function add_student($user_id, $cwu_id, $email, $first='', $last='')
 	{
+		global $link;
 		if ($cwu_id != 0)
 		{
 			$query_string = "
@@ -1732,12 +1752,12 @@
 			WHERE
 				cwu_id=$cwu_id
 			;";
-			
-			$query_result = my_query($query_string);
-			
-			if (mysql_num_rows($query_result) > 0)
+
+			$query_result = my_query($query_string, false);
+
+			if (mysqli_num_rows($query_result) > 0)
 			{
-				$row = mysql_fetch_assoc($query_result);
+				$row = mysqli_fetch_assoc($query_result);
 				return $row['id'];
 			}
 		}
@@ -1745,17 +1765,17 @@
 		{
 			return 0;
 		}
-	
+
 		$query_string = "
 		INSERT INTO Students
 			(cwu_id, email, first, last)
 		VALUES
 			($cwu_id, '$email', '$first', '$last')
 		;";
-		$result = my_query($query_string);
-		
-		$student_id = mysql_insert_id();
-		
+		$result = my_query($query_string, false);
+
+		$student_id = mysqli_insert_id($link);
+
 		if ($student_id > 0)
 		{
 			record_update_student($user_id, $student_id, "Added <student:$student_id>");
@@ -1767,10 +1787,10 @@
 
 		return $student_id;
 	}
-	
-	function update_student($user_id, $student_id, $first, $last, $cwu_id, $email, $phone, $address, $postbaccalaureate, $withdrawing, $veterans_benefits, $active)
 
+	function update_student($user_id, $student_id, $first, $last, $cwu_id, $email, $phone, $address, $postbaccalaureate, $withdrawing, $veterans_benefits, $active)
 	{
+		global $link;
 		$query_string = "
 		UPDATE
 			Students
@@ -1788,18 +1808,19 @@
 		WHERE
 			id=$student_id
 			;";
-			
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+
+		$query_result = my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Updated <student:$student_id>.";
 			record_update_student($user_id, $student_id, $note);
 		}
 	}
-	
+
 	function update_student_advisor($user_id, $student_id, $program_id, $advisor_id)
 	{
+		global $link;
 		$query_string = "
 		UPDATE
 			Student_Programs
@@ -1810,34 +1831,35 @@
 			AND
 			program_id=$program_id
 		;";
-	
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+
+		$query_result = my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Set advisor to <user:$advisor_id> for <student:$student_id> in <program:$program_id>.";
 			record_update_student($user_id, $student_id, $note);
 		}
 	}
-	
+
 	function update_student_program($student_id, $major_id, $advisor, $catalog_year, $graduation_year)
 	{
 		remove_student_major($student_id, $major_id);
-		
+
 		$query_string = "
 		INSERT INTO
 			Student_Majors(student_id, major_id, advisor, catalog_year, graduation_year)
 		VALUES
 			($student_id, $major_id, '$advisor', $catalog_year, $graduation_year)
 		;";
-		
-		$query_result = my_query($query_string);
+
+		$query_result = my_query($query_string, false);
 	}
-	
+
 	function update_student_programs($user_id, $student_id, $remove_programs, $add_program_id, $add_advisor_id, $non_stem_majors)
 	{
+		global $link;
 		//! @todo start update
-		
+
 		foreach ($remove_programs as $program_id)
 		{
 			$query_string = "
@@ -1848,15 +1870,15 @@
 				AND
 				program_id = $program_id
 			;";
-			
-			$query_result = my_query($query_string);
-			
-			if (mysql_affected_rows() > 0)
-			{
-				//! @todo record removal
-			}
+
+			$query_result = my_query($query_string, false);
+
+//			if (mysqli_affected_rows($link) > 0)
+//			{
+//				//! @todo record removal
+//			}
 		}
-		
+
 		if ($add_program_id != 0)
 		{
 			$query_string = "
@@ -1865,15 +1887,15 @@
 			VALUES
 				($student_id, $add_program_id, $add_advisor_id)
 			;";
-			
-			$query_result = my_query($query_string);
-			
-			if (mysql_affected_rows() > 0)
-			{
-				//! @todo record addition
-			}
+
+			$query_result = my_query($query_string, false);
+
+//			if (mysqli_affected_rows($link) > 0)
+//			{
+//				//! @todo record addition
+//			}
 		}
-		
+
 		$query_string = "
 		UPDATE
 			Students
@@ -1882,15 +1904,15 @@
 		WHERE
 			id=$student_id
 		;";
-		
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
-		{
-			//record update
-		}
+
+		$query_result = my_query($query_string, false);
+
+//		if (mysqli_affected_rows($link) > 0)
+//		{
+//			//record update
+//		}
 	}
-	
+
 	function remove_student_major($student_id, $major_id)
 	{
 		$query_string = "
@@ -1903,12 +1925,12 @@
 			AND
 			major_id=$major_id
 		;";
-		$query_result = my_query($query_string);
-		$row = mysql_fetch_assoc($query_result);
+		$query_result = my_query($query_string, false);
+		$row = mysqli_fetch_assoc($query_result);
 		$catalog_year = $row['catalog_year'];
-		
+
 		$program_id = get_program_id($major_id, $catalog_year);
-		
+
 		$query_string = "
 		DELETE
 			Electives
@@ -1919,8 +1941,8 @@
 			AND
 			student_id=$student_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$query_string = "
 		DELETE
 			Student_Checklists
@@ -1931,8 +1953,8 @@
 			AND
 			program_id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$query_string = "
 		DELETE FROM
 			Student_Majors
@@ -1941,11 +1963,12 @@
 			AND
 			major_id=$major_id
 		;";
-		$query_result = my_query($query_string);
+		$query_result = my_query($query_string, false);
 	}
-	
+
 	function clear_plan($user_id, $student_id)
 	{
+		global $link;
 		$query_string = "
 		DELETE FROM
 			Student_Classes
@@ -1953,36 +1976,34 @@
 			student_id='$student_id'
 			AND term != '000'
 			;";
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+		$query_result = my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "<student:$student_id> plan cleared.";
 			record_update_student($user_id, $student_id, $note);
 		}
 	}
-	
+
 	function add_student_class($user_id, $student_id, $class_id, $term)
 	{
-			$query_string = "
-			INSERT INTO
-				Student_Classes(student_id, class_id, term)
-			VALUES
-				($student_id, $class_id, $term)
-			;";
-			$result = my_query($query_string);
-			
-			$student_class_id = mysql_insert_id();
-			
-			if ($student_class_id)
-			{
-				$note = "<class:$class_id> added to <student:$student_id> in <term:$term>.";
-				record_update_student($user_id, $student_id, $note);
-			}
-
-			return $student_class_id;
+		global $link;
+		$query_string = "
+		INSERT INTO
+			Student_Classes(student_id, class_id, term)
+		VALUES
+			($student_id, $class_id, $term)
+		;";
+		$result = my_query($query_string, false);
+		$student_class_id = mysqli_insert_id($link);
+		if ($student_class_id)
+		{
+			$note = "<class:$class_id> added to <student:$student_id> in <term:$term>.";
+			record_update_student($user_id, $student_id, $note);
+		}
+		return $student_class_id;
 	}
-	
+
 	function add_student_elective($user_id, $student_class_id, $program_id)
 	{
 		$query_string = "
@@ -1991,17 +2012,17 @@
 		VALUES
 			($student_class_id, $program_id)
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 	}
 
 	function update_plan($user_id, $student_id, $program_id, $classes)
 	{
 		$note = "Begin Update: <student:$student_id> plan.";
 		record_update_student($user_id, $student_id, $note);
-		
+
 		clear_plan($user_id, $student_id);
-		
+
 		foreach($classes as $class_id => $data)
 		{
 			foreach ($data as $datum)
@@ -2009,7 +2030,7 @@
 				$term = $datum[0];
 				$slot = $datum[1];
 				$elective = $datum[2];
-				
+
 				$student_class_id = add_student_class($user_id, $student_id, $class_id, $term);
 
 				if ($elective)
@@ -2018,23 +2039,23 @@
 				}
 			}
 		}
-		
+
 		$note = "End Update: <student:$student_id> plan.";
 		record_update_student($user_id, $student_id, $note);
 	}
-	
+
 	function get_plan($student_id, $start_year, $end_year)
 	{
 		global $YES;
 		global $NO;
-		
+
 		if ($start_year != 0 && $end_year != 0)
 		for($year = $start_year; $year < $end_year; ++$year)
 		{
 			$classes_by_term[$year] = array(array(), array(), array(), array(), array());
 		}
 		$classes_by_id = array();
-	
+
 		$query_string = "
 		SELECT
 			Student_Classes.id AS student_class_id,
@@ -2049,33 +2070,33 @@
 			Student_Classes.term,
 			Classes.name
 			;";
-		
-		$query_result = my_query($query_string);
 
-		while ($row = mysql_fetch_assoc($query_result))
+		$query_result = my_query($query_string, false);
+
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$term = $row['term'];
 			$class_id = $row['id'];
 			$student_class_id = $row['student_class_id'];
-			
+
 			$catalog_year = substr($term, 0,4);
 			$catalog_term = substr($term, 4,1);
-			
+
 			if (!isset($classes_by_term[$catalog_year]))
 			{
 				$classes_by_term[$catalog_year] = array(array(), array(), array(), array(), array());
 			}
-			
+
 			if ($term != 000)
 			{
 				$classes_by_term[$catalog_year][$catalog_term][] = array('student_class_id' => $student_class_id, 'class_id' => $class_id);
 			}
 			$classes_by_id[$class_id] = $term;
 		}
-		
+
 		ksort($classes_by_term);
-		
-		$prev_year = 0;	
+
+		$prev_year = 0;
 		foreach ($classes_by_term as $year => $classes)
 		{
 			if ($prev_year != 0 && $prev_year != 0)
@@ -2088,12 +2109,12 @@
 			}
 			$prev_year = $year;
 		}
-		
+
 		ksort($classes_by_term);
-				
+
 		return array('by term' => $classes_by_term, 'by id' => $classes_by_id);
 	}
-	
+
 	function get_notes($student_id)
 	{
 		$query_string = "
@@ -2110,10 +2131,10 @@
 		ORDER BY
 			Notes.flagged, Notes.datetime DESC
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$notes = array();
-		while($row = mysql_fetch_assoc($query_result))
+		while($row = mysqli_fetch_assoc($query_result))
 		{
 			if ($row['name'] == '')
 			{
@@ -2127,17 +2148,18 @@
 			$flagged = $row['flagged'];
 			$notes[$row['id']] = array('tag' => $tag, 'note' => $note, 'flagged' => $flagged);
 		}
-				
+
 		return $notes;
 	}
-	
+
 	function add_note($user_id, $student_id, $note, $flagged)
 	{
+		global $link;
 		global $YES;
 		global $NO;
-		
-		$escaped_note = mysql_real_escape_string($note);
-		
+
+		$escaped_note = mysqli_real_escape_string($link, $note);
+
 		$flagged_text = ($flagged ? $YES : $NO);
 		$query_string = "
 		INSERT INTO Notes
@@ -2145,22 +2167,22 @@
 		VALUES
 			($user_id, $student_id, '$escaped_note', '$flagged_text', NOW())
 		";
-		$query_result = my_query($query_string);
-		
-		$note_id = mysql_insert_id();
-		
-		if (mysql_affected_rows() > 0)
+		$query_result = my_query($query_string, false);
+
+		$note_id = mysqli_insert_id($link);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "<note:$note_id> added to <student:$student_id>.";
 			record_update_student($user_id, $student_id, $note);
 		}
 	}
-	
+
 	function update_notes($student_id, $flagged_ids)
 	{
 		global $YES;
 		global $NO;
-		
+
 		$query_string = "
 		UPDATE Notes
 		SET
@@ -2168,8 +2190,8 @@
 		WHERE
 			student_id=$student_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		foreach ($flagged_ids as $flagged_id)
 		{
 			$query_string = "
@@ -2179,10 +2201,10 @@
 			WHERE
 				id=$flagged_id
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 		}
 	}
-	
+
 	function update_requirements($student_id, $requirements_taken)
 	{
 		$query_string = "
@@ -2193,8 +2215,8 @@
 			AND
 			term = 000
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		foreach ($requirements_taken as $requirement_id)
 		{
 			$query_string = "
@@ -2203,44 +2225,44 @@
 			VALUES
 				($student_id, $requirement_id, 000)
 			;";
-			$query_result = my_query($query_string);
+			$query_result = my_query($query_string, false);
 		}
 	}
-	
-	function students_in_program($program_id)
-	{
-		//! @todo this is failing and causing students.php to fail
-		return;
-		$query_string = "
-		SELECT
-			Students.id,
-			CONCAT(COALESCE(last,'*'), ', ', COALESCE(first,'*'), ' (', cwu_id, ')') AS name
-		FROM
-			Students
-			JOIN
-			Student_Programs
-			ON Students.id=Student_Programs.student_id
-		WHERE
-			cwu_id != 0
-			AND
-			Student_Programs.program_id=$program_id
-		ORDER BY
-			active, last, first ASC
-		;";
 
-		$query_result = my_query($query_string);
-		
-		$all_students = array();
-		while ($row = mysql_fetch_assoc($query_result))
-		{
-			$id = $row['id'];
-			$name = $row['name'];
-			$all_students[$id] = $name;
-		}
+//	function students_in_program($program_id)
+//	{
+//		//! @todo this is failing and causing students.php to fail
+//		return;
+//		$query_string = "
+//		SELECT
+//			Students.id,
+//			CONCAT(COALESCE(last,'*'), ', ', COALESCE(first,'*'), ' (', cwu_id, ')') AS name
+//		FROM
+//			Students
+//			JOIN
+//			Student_Programs
+//			ON Students.id=Student_Programs.student_id
+//		WHERE
+//			cwu_id != 0
+//			AND
+//			Student_Programs.program_id=$program_id
+//		ORDER BY
+//			active, last, first ASC
+//		;";
+//
+//		$query_result = my_query($query_string, false);
+//
+//		$all_students = array();
+//		while ($row = mysqli_fetch_assoc($query_result))
+//		{
+//			$id = $row['id'];
+//			$name = $row['name'];
+//			$all_students[$id] = $name;
+//		}
+//
+//		return $all_students;
+//	}
 
-		return $all_students;
-	}
-	
 	function students_for_user($user_id)
 	{
 		$query_string = "
@@ -2260,10 +2282,10 @@
 			active, last, first ASC
 		;";
 
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$all_students = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$id = $row['id'];
 			$name = $row['name'];
@@ -2272,7 +2294,7 @@
 
 		return $all_students;
 	}
-	
+
 	function all_students($active_only = false)
 	{
 		$query_string = "
@@ -2302,11 +2324,11 @@
 				last, first ASC
 				;";
 		}
-			
-		$query_result = my_query($query_string);
-		
+
+		$query_result = my_query($query_string, false);
+
 		$all_students = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$id = $row['id'];
 			$name = $row['name'];
@@ -2315,7 +2337,7 @@
 
 		return $all_students;
 	}
-	
+
 	function get_electives_credits($student_id, $program_id)
 	{
 		$query_string = "
@@ -2341,21 +2363,22 @@
 			AND
 			Electives.program_id = $program_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$credits = 0;
 		$electives = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$electives[$row['id']] = $row;
 			$credits += $row['credits'];
 		}
-		
+
 		return array('electives' => $electives, 'credits' => $credits);
 	}
-	
+
 	function fill_template($user_id, $student_id, $template_id, $template_year)
 	{
+		global $link;
 		$changed = false;
 		if ($template_id != 0)
 		{
@@ -2369,24 +2392,24 @@
 				AND
 				year > 0
 			;";
-			$query_result = my_query($query_string);
-			
-			while ($row = mysql_fetch_assoc($query_result))
+			$query_result = my_query($query_string, false);
+
+			while ($row = mysqli_fetch_assoc($query_result))
 			{
 				$class_id = $row['class_id'];
 				$qtr = $row['quarter'];
 				$yr = $template_year + ($row['year'] - 1);
 				$term = "$yr$qtr";
-				
+
 				$query_string = "
 					INSERT INTO
 						Student_Classes(student_id, class_id, term)
 					VALUES
 						($student_id, $class_id, $term)
 					;";
-				
-				my_query($query_string);
-				$changed = $changed || (mysql_affected_rows() > 0);
+
+				my_query($query_string, false);
+				$changed = $changed || (mysqli_affected_rows($link) > 0);
 			}
 		}
 		if ($changed)
@@ -2395,7 +2418,7 @@
 			record_update_student($user_id, $student_id, $note);
 		}
 	}
-	
+
 	function get_checked_items($student_id, $program_id)
 	{
 		$query_string = "
@@ -2408,19 +2431,20 @@
 			AND
 			program_id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$checked_items = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$checked_items[] = $row['checklist_id'];
 		}
-		
+
 		return $checked_items;
 	}
-	
+
 	function clear_checklist($user_id, $student_id, $program_id)
 	{
+		global $link;
 		$query_string = "
 		DELETE
 			Student_Checklists
@@ -2431,42 +2455,43 @@
 			AND
 			program_id=$program_id
 		;";
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+		$query_result = my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Cleared <student:$student_id> checklists for <program:$program_id>.";
 			record_update_student($user_id, $student_id, $note);
 		}
 	}
-	
+
 	function check_checklist($user_id, $student_id, $checklist_id)
 	{
+		global $link;
 		$query_string = "
 		INSERT INTO
 			Student_Checklists(checklist_id, student_id)
 		VALUES
 			($checklist_id, $student_id)
 		;";
-		$query_result = my_query($query_string);
-		
-		if (mysql_affected_rows() > 0)
+		$query_result = my_query($query_string, false);
+
+		if (mysqli_affected_rows($link) > 0)
 		{
 			$note = "Checked <checklist_item:$checklist_id> for <student:$student_id>.";
 			record_update_student($user_id, $student_id, $note);
 		}
 	}
-	
+
 	function update_checklist($user_id, $student_id, $program_id, $checklist_ids)
 	{
 		clear_checklist($user_id, $student_id, $program_id);
-		
+
 		foreach ($checklist_ids as $checklist_id)
 		{
 			check_checklist($user_id, $student_id, $checklist_id);
 		}
 	}
-	
+
 	function get_lost_students()
 	{
 		global $NO, $YES;
@@ -2512,17 +2537,17 @@
 			ORDER BY
 				term
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$info = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$info[] = $row;
 		}
-		
+
 		return $info;
 	}
-	
+
 	function get_bad_cwu_ids()
 	{
 		$query_string = "
@@ -2542,22 +2567,22 @@
 				cwu_id > 99999999
 			)
 		;";
-		$query_result = my_query($query_string);
-		
+		$query_result = my_query($query_string, false);
+
 		$info = array();
-		while ($row = mysql_fetch_assoc($query_result))
+		while ($row = mysqli_fetch_assoc($query_result))
 		{
 			$info[] = $row;
 		}
-		
+
 		return $info;
 	}
-	
-	
-//-----------------------------------------------------	
+
+
+//-----------------------------------------------------
 //! TERMS
-//-----------------------------------------------------	
-	
+//-----------------------------------------------------
+
 	function get_enrollments($year)
 	{
 		global $YES;
@@ -2565,7 +2590,7 @@
 		$year2 = 10*($year)+2;
 		$year3 = 10*($year)+3;
 		$year4 = 10*($year)+4;
-		
+
 		$query_string = "
 		SELECT
 			Classes.id,
@@ -2600,10 +2625,10 @@
 			Classes.name ASC,
 			Student_Classes.term
 		;";
-		$result = my_query($query_string);
+		$result = my_query($query_string, false);
 		
 		$enrollments = array();
-		while ($row = mysql_fetch_assoc($result))
+		while ($row = mysqli_fetch_assoc($result))
 		{
 			$class_id = $row['id'];
 			$term_number = substr($row['term'],-1);
