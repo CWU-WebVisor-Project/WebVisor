@@ -9,6 +9,7 @@
 	include_once("_sql.php");
 	
 	$user_info = get_user_info();
+    	$user_id = $user_info['id'];
 	$superuser = is_superuser($user_info);
 	
 	if (!$user_info || !$superuser)
