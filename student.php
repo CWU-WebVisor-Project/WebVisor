@@ -6,6 +6,7 @@
 	
 	include_once("_html.php");
 	include_once("_sql.php");
+    global $YES;
 	
 	$user_info = get_user_info();
 
@@ -82,7 +83,11 @@
 		$confirm_remove_program_ids = extract_ids('remove-confirm-program', $_POST);
 		$remove_program_ids = array_intersect($remove_program_ids, $confirm_remove_program_ids);
 		$add_program_ids = extract_ids("add-program", $_POST);
-		$add_program_id = $add_program_ids[0];
+        $add_program_id = 0; // Set a default value for $add_program_id
+        // Check if $add_program_ids is not empty before accessing its elements
+        if (!empty($add_program_ids)) {
+            $add_program_id = $add_program_ids[0];
+        }
 		$add_advisor_id = extract_int($_POST, "add-advisor");
 		$non_stem_majors = extract_string($_POST, "non-stem-programs");
 		$advisor_list = extract_id_values('advisor-program', $_POST);
@@ -198,7 +203,7 @@
 			$all_students_blank = $all_students_blank + array('0000' => '');
 			$all_students_blank = $all_students_blank + array('00000' => '==PROGRAM STUDENTS==');
 			// we get here
-			$all_students_blank = $all_student_blank + $students_in_program;
+			$all_students_blank = $all_students_blank + $students_in_program;
 			// but we do not get here
 		}
 	}
@@ -209,7 +214,7 @@
 		
 	$all_years = all_years();
 	$all_years_blank = array('0' => '') + $all_years;
-
+    $name = '';
 	if ($student_id != 0)
 	{
 		$student_info = get_student_info($student_id);
@@ -240,7 +245,7 @@
 		$start_year = extract_int($_POST, 'start_year', $start_year);
 		$end_year = max($start_year + 1, extract_int($_POST, 'end_year', $end_year));
 
-		$plan = get_plan($student_id, $start_year, $end_year);
+        $plan = get_plan($student_id, $start_year, $end_year);
 		$classes = $plan['by term'];
 		$class_ids = $plan['by id'];
 		
@@ -311,12 +316,12 @@
 		}
 	</script>
 </head>
-<body<?php echo($body_class); ?>>
+<body>
 
 <?php echo(messages()); ?>
 <?php echo(linkmenu()); ?>
 
-<h1>Student Plan<?php if ($name != '') { echo(" &mdash; <a href='mailto:$email@cwu.edu'>$name</a>"); }?></h1>
+<h1>Student Plan</h1>
 
 <form action='student.php#message_end' method='post' id='select_student'>
 
@@ -586,13 +591,8 @@
 		{
 			continue;
 		}
-		
-		if ($year != $next_year && $next_year != 0)
-		{
-			echo("Missed Year Fall $next_year ($year)<br />");
-		}
+        $next_year = $year + 1;
 
-		$next_year = $year + 1;
 ?>	
 		<tr class='header'>
 			<td>Fall <?php echo($year); ?></td>
@@ -602,6 +602,7 @@
 		</tr>
 		<tr>
 <?php
+
 		for($term_number = 1; $term_number < 5; ++$term_number)
 		{
 			if ($term_number == 1)
@@ -625,29 +626,44 @@
 ?>
 		<td valign='top'>
 <?php
+/*
+    echo "<pre>";
+    print_r($classes);
+    print_r($terms);
+    print_r($term_classes);
+    echo "</pre>";
+*/
 			$term_credits = 0;
 			for ($j = 0; $j < $slots; ++$j)
 			{
-				$class_id = $term_classes[$j]['class_id'];
-				$student_class_id = $term_classes[$j]['student_class_id'];
+                if (isset($term_classes[$j]) && array_key_exists('class_id', $term_classes[$j]))
+                {
+                    $class_id = $term_classes[$j]['class_id'];
+                    $student_class_id = $term_classes[$j]['student_class_id'];
+                } else {
+                    $class_id = 0;
+                    $student_class_id = 0;
+                }
+
 				$class_info = get_class_info($class_id);
 				$style = "";
 				$title = "";
-				if ($class_id != 0 && $class_info[$term_name] != $YES)
-				{
-					$style=" class='error'";
-					$title = "title='Class not offered this term.'";
-				}
-				$term_credits += $class_info['credits'];
-				$slot_name = "$year$term_number-$j";
-				$class_menu = "<span$style$title>".array_menu("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
-				$elective_checkbox = '';
-				if ($class_id != 0 && !array_key_exists($class_id, $required_classes) && $program_id != 0 && $program_elective_credits > 0 && $student_advisor)
-				{
-					$is_elective = key_exists($student_class_id, $electives);
-					$elective_checkbox = checkbox("\t\t\t\t", "elective-$slot_name", $is_elective)."\n";
-				}
-				echo("<span style='white-space:nowrap;'>$class_menu$elective_checkbox</span>");
+                if ($class_info !== null) {
+                    if ($class_id != 0 && $class_info[$term_name] != $YES) {
+                        $style = " class='error'";
+                        $title = "title='Class not offered this term.'";
+                    }
+                    $term_credits += $class_info['credits'];
+                    $is_elective = $class_id != 0 && !array_key_exists($class_id, $required_classes) && $program_id != 0 && $program_elective_credits > 0 && $student_advisor && key_exists($student_class_id, $electives);
+                } else {
+                    // Handle case when class_info is null, perhaps set default values or skip
+                    $is_elective = false;
+                }
+
+                $slot_name = "$year$term_number-$j";
+                $class_menu = "<span$style$title>".array_menu("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
+                $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $is_elective)."\n" : '';
+                echo("<span style='white-space:nowrap;'>$class_menu$elective_checkbox</span>");
 ?>
 				<br />
 <?php
@@ -731,9 +747,13 @@
 				{
 					$satisfied = false;
 					// try to find it in replacements
-					
-					$replacement_ids = $replacement_classes[$required_id]['replacements'];
-					foreach ($replacement_ids as $replacement_info)
+                    if (isset($replacement_classes[$required_id]) && array_key_exists('replacements', $replacement_classes[$required_id])) {
+                        $replacement_ids = $replacement_classes[$required_id]['replacements'];
+                    } else {
+                        $replacement_ids = array();
+                    }
+
+                    foreach ($replacement_ids as $replacement_info)
 					{
 						$replacement_id = $replacement_info['id'];
 						$replacement_name = $replacement_info['name'];
@@ -766,6 +786,7 @@
 			</td>
 <?php
 				++$col;
+                $elective_names = array();
 				if ($col == 3)
 				{
 ?>
@@ -778,7 +799,6 @@
 							$elective_credits = 0;
 						} // if ($elective_credits == '')
 						//! @todo should order electives by name or date
-						$elective_names = array();
 						foreach ($electives as $elective_data)
 						{
 							$elective_names[] = $elective_data['name'];
@@ -790,7 +810,7 @@
 						} // if ($elective_credits < $program_elective_credits)
 ?>
 			<td<?php echo($class); ?>>
-				<?php echo($elective_credits) ?> of <?php echo($program_elective_credits); ?> credits
+				<?php echo($elective_credits) ?> of <?php echo($program_elective_credits); ?> credits 
 			</td>
 <?php
 					}
@@ -933,7 +953,7 @@
 <?php
 	} // if ($student_id != 0)
 ?>
-		
+
 </form>
 
 </body>
