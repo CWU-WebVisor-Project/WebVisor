@@ -24,6 +24,12 @@
 	{
 		$years[$i] = "$i";
 	}
+
+   	if(isset($_GET['year']) && array_key_exists($_GET['year'], $years)) {
+        	$year = $_GET['year'];
+    	} else {
+        	$year = $curr_year - 1; // Default to the earliest year in the range
+    	}
 	
 	$enrollments = get_enrollments($year);
 ?>
