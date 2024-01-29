@@ -75,11 +75,11 @@
 ?>
 			<tr>
 				<td>User Login</td>
-				<td><input type='text' name='user_login' value='<?php echo($user_login); ?>' /></td>
+				<td><input type='text' name='user_login' value='<?php echo($login); ?>' /></td>
 			</tr>
 			<tr>
 				<td>User Password</td>
-				<td><input type='password' name='user_password' value='<?php echo($user_pass); ?>' /></td>
+				<td><input type='password' name='user_password' value='<?php echo($password); ?>' /></td>
 			</tr>
 			<tr>
 				<td />
