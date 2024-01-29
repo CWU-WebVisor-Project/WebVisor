@@ -18,7 +18,7 @@
 
 	$curr_year = date('Y');
 	$year = extract_int($_GET, 'year', $curr_year);
-
+	$years = [];
 	//! @todo should go back to previous year if we are in Winter or Spring
 	for ($i = $curr_year - 1; $i < $curr_year+10; ++$i)
 	{
@@ -44,9 +44,8 @@
 <h1>Enrollments</h1>
 
 <form action='' method='get'>
-Year Starting Fall:
 <?php
-	echo(array_menu('', $years, 'year', $year, true));
+	echo(array_menu('Year Starting Fall: ', $years, 'year', $year, true));
 ?>
 </form>
 
@@ -63,6 +62,7 @@ Year Starting Fall:
 	{
 		$name = $info['name'];
 		$enrollment = $info['enrollment'];
+		$class = '';
 		if ($class == 'even')
 		{
 			$class = 'odd';
