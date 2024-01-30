@@ -2,7 +2,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-<?php
+    <link href="https://cdn.jsdelivr.net/npm/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js" type=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js" type=""></script>
+    <?php
 	
 	include_once("_html.php");
 	include_once("_sql.php");
@@ -329,7 +332,15 @@
 		<tr>
 			<td>Student:</td>
 			<td>
-<?php echo(array_menu("\t\t\t\t", $all_students_blank, 'student_id', $student_id, false, '1')); ?>
+                <select id="student_id" name="student_id" class="select2-student">
+                    <option value=""></option>
+
+                    <?php foreach ($all_students_blank as $value => $label): ?>
+                        <option value="<?php echo htmlspecialchars($value); ?>">
+                            <?php echo htmlspecialchars($label); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
 			</td>
 <?php
 	if ($student_id == 0)
@@ -810,7 +821,7 @@
 						} // if ($elective_credits < $program_elective_credits)
 ?>
 			<td<?php echo($class); ?>>
-				<?php echo($elective_credits) ?> of <?php echo($program_elective_credits); ?> credits 
+				<?php echo($elective_credits) ?> of <?php echo($program_elective_credits); ?> credits
 			</td>
 <?php
 					}
@@ -955,6 +966,18 @@
 ?>
 
 </form>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 on your student dropdown
+        $('#student_id').select2({
+            placeholder: "Select a student", // This is your placeholder text
+            allowClear: true // This allows a clear button to appear
+        });
+
+        // Set to null for no default selection
+        $('#student_id').val(null).trigger('change');
+    });
+</script>
 
 </body>
 </html>
