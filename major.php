@@ -39,6 +39,7 @@
 	
 	$all_majors = all_majors();
 	$all_majors_blank = array('0' => '') + $all_majors;
+    $name = '';
 	if ($major_id != 0)
 	{
 		$major_info = get_major_info($major_id);
