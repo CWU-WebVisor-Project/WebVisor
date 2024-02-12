@@ -665,7 +665,8 @@
                         $title = "title='Class not offered this term.'";
                     }
                     $term_credits += $class_info['credits'];
-                    $is_elective = $class_id != 0 && !array_key_exists($class_id, $required_classes) && $program_id != 0 && $program_elective_credits > 0 && $student_advisor && key_exists($student_class_id, $electives);
+                    $is_elective = $class_id != 0 && !array_key_exists($class_id, $required_classes) && $program_id != 0 && $program_elective_credits > 0 && $student_advisor && key_exists($class_id, get_program_classes($program_id));
+					$check_elective =  key_exists($student_class_id, $electives) ;
                 } else {
                     // Handle case when class_info is null, perhaps set default values or skip
                     $is_elective = false;
@@ -673,7 +674,7 @@
 
                 $slot_name = "$year$term_number-$j";
                 $class_menu = "<span$style$title>".array_menu("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
-                $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $is_elective)."\n" : '';
+                $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $check_elective)."\n" : '';
                 echo("<span style='white-space:nowrap;'>$class_menu$elective_checkbox</span>");
 ?>
 				<br />
