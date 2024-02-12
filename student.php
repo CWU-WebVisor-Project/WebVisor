@@ -741,6 +741,8 @@
 ?>
 		<tr>
 <?php
+			$elective_names = array();
+
 			foreach($required_classes as $required_id => $info)
 			{
 				$required_name = $info['name_credits'];
@@ -798,7 +800,7 @@
 			</td>
 <?php
 				++$col;
-                $elective_names = array();
+                
 				if ($col == 3)
 				{
 ?>
