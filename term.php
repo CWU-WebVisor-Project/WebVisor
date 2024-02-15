@@ -78,7 +78,17 @@
 		for ($i = 1; $i < 5; ++$i)
 		{
 ?>
-		<td style='text-align:center;'><a href='roster.php?class_id=<?php echo($class_id); ?>&amp;term=<?php echo($year.$i); ?>'><?php echo($enrollment[$i]); ?></a></td>
+		<td style='text-align:center;'><a href='roster.php?class_id=<?php echo($class_id); ?>&amp;term=<?php echo($year.$i); ?>'>
+                <?php
+
+                if(isset($enrollment[$i])) {
+
+                    echo($enrollment[$i]);
+                } else {
+                    echo(" ");
+                }
+
+                ?></a></td>
 <?php
 		}
 ?>

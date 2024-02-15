@@ -16,7 +16,7 @@
 	}
 	
 	$program_id = extract_int($_GET, 'program_id');
-
+    $roster = [];
 	if ($program_id != 0)
 	{
 		$roster = get_program_roster($program_id);
