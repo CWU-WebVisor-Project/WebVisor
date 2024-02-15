@@ -1457,32 +1457,25 @@
 		global $YES;
 
 		$sql_result = my_query("SELECT DISTINCT
-			Classes.id,
-			Classes.name,
-			Count(*) AS count
-		FROM
-			Student_Classes AS Hub,
-			Student_Classes AS Spoke,
-			Classes,
-			Students
-		WHERE
-			Hub.class_id=$class_id
-			AND
-			Hub.term=$term
-			AND
-			Hub.student_id=Spoke.student_id
-			AND
-			Spoke.term=Hub.term
-			AND
-			Classes.id=Spoke.class_id
-			AND
-			Students.id=Hub.student_id
-			AND
-			Students.active='$YES'
-			AND
-			Hub.class_id != Spoke.class_id
-		GROUP BY
-			Classes.name;", false);
+    Classes.id,
+    Classes.name,
+    Count(*) AS count
+FROM
+    Student_Classes AS Hub
+JOIN
+    Student_Classes AS Spoke ON Hub.student_id = Spoke.student_id AND Spoke.term = Hub.term
+JOIN
+    Classes ON Classes.id = Spoke.class_id
+JOIN
+    Students ON Students.id = Hub.student_id
+WHERE
+    Hub.class_id = $class_id
+    AND Hub.term = $term
+    AND Students.active = '$YES'
+    AND Hub.class_id != Spoke.class_id
+GROUP BY
+    Classes.id, Classes.name;
+", false);
 
 		$result = array();
 		while ($row = mysqli_fetch_assoc($sql_result))
@@ -2592,39 +2585,33 @@
 		$year4 = 10*($year)+4;
 
 		$query_string = "
-		SELECT
-			Classes.id,
-			Classes.name,
-			Student_Classes.term,
-			CONCAT(Classes.name, ' (', Classes.credits, ' cr)') AS name_credits,
-			COUNT(Student_Classes.student_id) AS enrollment
-		FROM
-			Classes,
-			Student_Classes,
-			Students
-		WHERE
-			Classes.id=Student_Classes.class_id
-			AND
-			(
-				Student_Classes.term='$year1'
-				OR
-				Student_Classes.term='$year2'
-				OR
-				Student_Classes.term='$year3'
-				OR
-				Student_Classes.term='$year4'
-			)
-			AND
-			Students.id=Student_Classes.student_id
-			AND
-			Students.active='$YES'
-		GROUP BY
-			name_credits,
-			Student_Classes.term
-		ORDER BY
-			Classes.name ASC,
-			Student_Classes.term
-		;";
+SELECT
+    Classes.id,
+    Classes.name,
+    Student_Classes.term,
+    CONCAT(Classes.name, ' (', Classes.credits, ' cr)') AS name_credits,
+    COUNT(Student_Classes.student_id) AS enrollment
+FROM
+    Classes
+JOIN
+    Student_Classes ON Classes.id=Student_Classes.class_id
+JOIN
+    Students ON Students.id=Student_Classes.student_id
+WHERE
+    (
+        Student_Classes.term='$year1'
+        OR Student_Classes.term='$year2'
+        OR Student_Classes.term='$year3'
+        OR Student_Classes.term='$year4'
+    )
+    AND Students.active='$YES'
+GROUP BY
+    Classes.id, Classes.name, Classes.credits, Student_Classes.term
+ORDER BY
+    Classes.name ASC,
+    Student_Classes.term
+;";
+
 		$result = my_query($query_string, false);
 		
 		$enrollments = array();

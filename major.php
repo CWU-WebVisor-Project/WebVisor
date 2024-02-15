@@ -4,7 +4,7 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<link rel='stylesheet' type='text/css' href='_style.css' />
 <?php
-	
+    global $YES;
 	include_once("_html.php");
 	include_once("_sql.php");
 	
