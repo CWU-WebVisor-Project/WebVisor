@@ -48,7 +48,7 @@
 			SELECT
 				*
 			FROM
-				Users
+				users
 			WHERE
 				login='$login'
 				AND
@@ -81,7 +81,7 @@
 	{
 		$query_string = "
 			UPDATE
-				Users
+				users
 			SET
 				name='$name',
 				program_id=$program_id

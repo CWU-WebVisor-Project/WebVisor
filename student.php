@@ -560,10 +560,23 @@
 
 </form>
 
+<form autocomplete="off" action="/action_page.php">
+  <div class="autocomplete" style="width:300px;">
+    <input id="myInput" type="text" name='Classes' placeholder="course" list='courses'>
+        <datalist id="courses">
+     <?php 
+        foreach ($all_classes as $option) {
+           echo '<option value=\''.$option.'\'>';
+        }
+     ?>
+  </datalist>
+  </div>
+    <input type='hidden'>
+</form>
 <form action='student.php#student_plan' method='post' id='student_plan'>
 	<input type='hidden' name='student_id' value='<?php echo($student_id); ?>' />
 	<input type='hidden' name='program_id' value='<?php echo($program_id); ?>' />
-
+        
 
 <h2>Student Plan</h2>
 	
@@ -580,6 +593,7 @@
 				starting Fall
 <?php echo(array_menu("\t\t\t\t", all_years(), 'template_year', $start_year, false)); ?>
 				<input type='submit' name='fill_template' value='Fill Classes'>
+                                 
 			</td>
 		</tr>
 <?php
@@ -670,7 +684,7 @@
                     // Handle case when class_info is null, perhaps set default values or skip
                     $is_elective = false;
                 }
-
+ 
                 $slot_name = "$year$term_number-$j";
                 $class_menu = "<span$style$title>".array_menu("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
                 $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $is_elective)."\n" : '';
@@ -709,7 +723,7 @@
 <form action='student.php#program_requirements' method='post' id='program_requirements'>
 	<input type='hidden' name='student_id' value='<?php echo($student_id); ?>' />
 	<input type='hidden' name='program_id' value='<?php echo($program_id); ?>' />
-
+        
 	<h2>Program Requirements
 	</h2>
 	
