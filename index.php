@@ -3,9 +3,15 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<link rel='stylesheet' type='text/css' href='_style.css' />
+
+
 <?php
-	
-	include_once("_html.php");
+    require_once __DIR__ . '/vendor/autoload.php';
+
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+
+    include_once("_html.php");
 	include_once("_sql.php");
 	
 	if (!get_user_info())

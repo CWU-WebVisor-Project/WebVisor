@@ -1,2 +1,6 @@
-
+.env
 .idea/dataSources.xml
+vendor/
+g
+changepass.php
+composer.phar
