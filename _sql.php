@@ -1,5 +1,7 @@
 <?php
-
+	require_once __DIR__ . '/vendor/autoload.php';
+	$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+	$dotenv->load();
 //-----------------------------------------------------	
 //! DATABASE ACCESS
 //-----------------------------------------------------	
@@ -18,60 +20,56 @@
 	}
 	
 	//! @todo https://stackoverflow.com/questions/1581610/how-can-i-store-my-users-passwords-safely
-	function get_user_info($login='', $password='', $database='', $setcookies = true)
-	{
-		$master_login = 'root';
-		$master_password = '';
-		$database = 'scheduler';
-		global $link;
-
-		$link = mysqli_connect('localhost', $master_login, $master_password, $database);
-		if (!$link)
-		{
-			add_message("Error: could not link to server, please contact Aaron.<br />");
-			return false;
-		}
-		$database_found = mysqli_select_db($link, $database);
-		if (!$database_found)
-		{
-			add_message("Error: could not connect to database, please contact Aaron.<br />");
-			return false;
-		}
-		
-		if ($login == '' && $password == '')
-		{
-			$login = $_COOKIE['webvisor_login'];
-			$password = $_COOKIE['webvisor_password'];
-		}
-		
-		$query_string = "
-			SELECT
-				*
-			FROM
-				Users
-			WHERE
-				login='$login'
-				AND
-				password='$password'
-			;";
-		$query_result = my_query($query_string, false);
-		if (mysqli_num_rows($query_result) == 0)
-		{
-			return false;
-		}
-		else
-		{
-			if ($setcookies)
-			{
-				$one_year = time()+60*60*24*365;
-				setcookie('webvisor_login', $login, $one_year);
-				setcookie('webvisor_password', $password, $one_year);
-			}
-			return mysqli_fetch_assoc($query_result);
-		}
+function get_user_info($login = '', $password = '', $setCookies = true)
+{
+	// Use environment variables for configuration
+	$host = $_ENV['DB_HOST'];
+	$port = $_ENV['DB_PORT'];
+	$user = $_ENV['DB_USER'];
+	$pass = $_ENV['DB_PASS'];
+	$dbName = $_ENV['DB_NAME'];
+	global $link;
+	// Establish connection to the database
+	$link = mysqli_connect($host, $user, $pass, $dbName, $port);
+	if (!$link) {
+		add_message("Error: Could not link to server, please contact Aaron.<br />");
+		return false;
 	}
 
-	function is_superuser($user_info)
+	// Retrieve login details from cookies if not provided
+	if (empty($login) && empty($password) && isset($_COOKIE['webvisor_login']) && isset($_COOKIE['webvisor_password'])) {
+		$login = $_COOKIE['webvisor_login'];
+		$password = $_COOKIE['webvisor_password'];
+		// Note: Storing passwords, even hashed, in cookies is highly insecure and not recommended.
+	}
+
+	// Prepare statement to prevent SQL injection
+	$stmt = $link->prepare("SELECT * FROM Users WHERE login = ?");
+	$stmt->bind_param("s", $login);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	if ($result->num_rows == 0) {
+		return false;
+	} else {
+		$user = $result->fetch_assoc();
+		// Verify the hashed password
+		if (password_verify($password, $user['password'])) {
+			if ($setCookies) {
+				$oneYear = time() + 60 * 60 * 24 * 365;
+				setcookie('webvisor_login', $login, $oneYear);
+				setcookie('webvisor_password', $password, $oneYear);
+				// Do not store passwords or hashed passwords in cookies
+			}
+			return $user;
+		} else {
+			return false;
+		}
+	}
+}
+
+
+function is_superuser($user_info)
 	{
 		global $YES;
 		return ($user_info['superuser'] == $YES);

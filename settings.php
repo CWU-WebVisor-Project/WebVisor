@@ -16,7 +16,7 @@
 	}
 	else
 	{
-		$user_info = get_user_info($login, $password, '', true);
+		$user_info = get_user_info($login, $password, true, true);
 	}
 
 	if ($user_info)
