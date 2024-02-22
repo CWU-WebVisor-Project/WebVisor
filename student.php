@@ -6,17 +6,17 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js" type=""></script>
     <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js" type=""></script>
     <?php
-    session_start();
+//    session_start();
 
 	include_once("_html.php");
 	include_once("_sql.php");
-
+/*
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         // Redirect to settings.php if not logged in
         header('Location: settings.php');
         exit; // Prevent further execution of the script
     }
-
+*/
     global $YES;
 	
 	$user_info = get_user_info();
