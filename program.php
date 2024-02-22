@@ -300,9 +300,12 @@
 			<td colspan='7'>Add Program Class(es):</td>
 		</tr>
 		<tr>
-			<td />
+			<td/>
 			<td colspan='6'>
-				<select multiple='multiple' size='50' name='update_program_classes[]'>
+                <div class="dropdown">
+                <button onclick="toggleDropdown()" class="dropbtn">Selection of Classes</button>
+                <div id="classDropdown" class="dropdown-content">
+				<select multiple='multiple' size='10' name='update_program_classes[]'>
 <?php
 		foreach ($all_classes as $id => $name)
 		{
@@ -315,6 +318,8 @@
 		}
 ?>
 				</select>
+                </div>
+                </div>
 			</td>
 		</tr>
 		<tr>
@@ -441,6 +446,49 @@
 <?php
 	}
 ?>
+
+<style>
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f1f1f1;
+        min-width: 160px;
+        max-height: 500px; /* Set maximum height for the dropdown */
+        overflow-y: auto; /* Enable vertical scrollbar */
+        border: 1px solid #ddd;
+        z-index: 1;
+    }
+
+    .dropdown-content select {
+        width: 100%;
+        border: none;
+    }
+
+    .dropdown-content select option {
+        padding: 5px;
+    }
+
+    .dropdown-content select option:hover {
+        background-color: #ddd;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+</style>
+
+
+<script>
+    function toggleDropdown() {
+        var dropdown = document.getElementById("classDropdown");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+</script>
 
 </body>
 </html>
