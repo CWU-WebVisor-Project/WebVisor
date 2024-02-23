@@ -4,3 +4,5 @@ vendor/
 g
 changepass.php
 composer.phar
+.idea
+/.idea
