@@ -248,7 +248,16 @@
 		
 		return $result;
 	}
-	
+	function auto_text($prefix, $items, $name, $selected, $id=""){
+            $result = "$prefix<input type = 'text' name='$name' id='$id' value = '$selected' placeholder= 'course' list= 'list-$name'>\n";
+            $result .="$prefix<datalist id='list-$name'\n>";
+            foreach($items as $value=>$text){
+		$result .= "$prefix\t<option value='$text'></option>\n";
+            }
+            $result .= "$prefix<\datalist>\n";
+            return $result;
+            
+        }
 	function checkbox($prefix, $name, $checked)
 	{
 		$result = "$prefix<input type='checkbox' name='$name'";

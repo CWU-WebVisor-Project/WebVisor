@@ -324,6 +324,7 @@
 <?php echo(messages()); ?>
 <?php echo(linkmenu()); ?>
 
+ 
 <h1>Student Plan</h1>
 
 <form action='student.php#message_end' method='post' id='select_student'>
@@ -560,9 +561,9 @@
 
 </form>
 
-<form autocomplete="off" action="/action_page.php">
+   <form autocomplete="off" action="/action_page.php">
   <div class="autocomplete" style="width:300px;">
-    <input id="myInput" type="text" name='Classes' placeholder="course" list='courses'>
+    <input id="myInput" type="text" name='Classes' placeholder="course" list='courses' selected ='TEST'>
         <datalist id="courses">
      <?php 
         foreach ($all_classes as $option) {
@@ -573,6 +574,8 @@
   </div>
     <input type='hidden'>
 </form>
+    
+
 <form action='student.php#student_plan' method='post' id='student_plan'>
 	<input type='hidden' name='student_id' value='<?php echo($student_id); ?>' />
 	<input type='hidden' name='program_id' value='<?php echo($program_id); ?>' />
@@ -686,7 +689,7 @@
                 }
  
                 $slot_name = "$year$term_number-$j";
-                $class_menu = "<span$style$title>".array_menu("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
+                $class_menu = "<span$style$title>".auto_text("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id, "autocomplete-$slot_name")."</span>";
                 $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $is_elective)."\n" : '';
                 echo("<span style='white-space:nowrap;'>$class_menu$elective_checkbox</span>");
 ?>
