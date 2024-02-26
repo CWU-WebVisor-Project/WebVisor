@@ -1,0 +1,11 @@
+DB_HOST='webvisorproj.ddns.net'
+
+DB_PORT='33000'
+
+DB_NAME='scheduler'
+
+DB_USER='tallulahcook'
+
+DB_PASS='Cwu2024!'
+
+API_KEY=secret_key_here
