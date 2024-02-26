@@ -2629,4 +2629,61 @@ ORDER BY
 		return $enrollments;
 	}
 	
+	function get_enrollments_by_program($year, $program_id)
+	{
+		global $YES;
+		$year1 = 10 * $year + 1;
+		$year2 = 10 * $year + 2;
+		$year3 = 10 * $year + 3;
+		$year4 = 10 * $year + 4;
+	
+		$query_string = "
+	SELECT
+		C.id,
+		C.name,
+		SC.term,
+		CONCAT(C.name, ' (', C.credits, ' cr)') AS name_credits,
+		COUNT(SC.student_id) AS enrollment
+	FROM
+		Classes C
+	JOIN
+		Student_Classes SC ON C.id = SC.class_id
+	JOIN
+		Students S ON S.id = SC.student_id
+	JOIN
+		Program_Classes PC ON C.id = PC.class_id
+	WHERE
+		(
+			SC.term = '$year1'
+			OR SC.term = '$year2'
+			OR SC.term = '$year3'
+			OR SC.term = '$year4'
+		)
+		AND S.active = '$YES'
+		AND PC.program_id = '$program_id' -- Filter by program ID
+	GROUP BY
+		C.id, C.name, C.credits, SC.term
+	ORDER BY
+		C.name ASC,
+		SC.term
+	;";
+	
+		$result = my_query($query_string, false);
+		
+		$enrollments = array();
+		while ($row = mysqli_fetch_assoc($result))
+		{
+			$class_id = $row['id'];
+			$term_number = substr($row['term'], -1);
+			if (!isset($enrollments[$class_id]))
+			{
+				$enrollments[$class_id] = array('name' => $row['name_credits'], 'enrollment' => array());
+			}
+			$enrollments[$class_id]['enrollment'][$term_number] = $row['enrollment']; 
+		}
+		
+		return $enrollments;
+	}
+	
+
 ?>

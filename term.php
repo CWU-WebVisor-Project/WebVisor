@@ -59,16 +59,19 @@
         <td style="vertical-align: top;">
             <form action='' method='get'>
                 <?php echo(array_menu('Year Starting Fall: ', $years, 'year', $year, true));?>
-                <?php echo(array_menu('Majors: ', $all_programs_blank, 'program_id',$program_id ,false)); ?>
-                <input type='submit' />
+                <?php echo(array_menu('Majors: ', $all_programs_blank, 'program_id',$program_id ,true)); ?>
             </form>
         </td>
 
 
 
         <?php 
-        
-            $enrollments = get_enrollments($year);
+            if ($program_id == 0){
+                $enrollments = get_enrollments($year);
+                //echo '<pre>'; print_r($enrollments); echo '</pre>';
+            } else {
+                $enrollments = get_enrollments_by_program($year,$program_id);
+            }
         
         ?>
 
