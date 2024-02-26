@@ -30,8 +30,18 @@
     }
 
     //array of majors
+    $all_programs_blank = [];
     $all_programs_blank = array(0 => '') + all_programs();
     $program_id = extract_int($_GET, 'program_id');
+
+    // Check if program_id is selected in URL parameters
+    if (isset($_GET['program_id']) && array_key_exists($_GET['program_id'], $all_programs_blank)) {
+        $program_id = $_GET['program_id'];
+    } else {
+        // Default to an empty program if no program is selected
+        $program_id = 0;
+    }
+
 
     ?>
     <title>Enrollments</title>
@@ -49,14 +59,12 @@
         <td style="vertical-align: top;">
             <form action='' method='get'>
                 <?php echo(array_menu('Year Starting Fall: ', $years, 'year', $year, true));?>
+                <?php echo(array_menu('Majors: ', $all_programs_blank, 'program_id',$program_id ,false)); ?>
+                <input type='submit' />
             </form>
         </td>
 
-        <td style="vertical-align: top;"> 
-            <form action='' method='get'>
-                <?php echo(array_menu('Majors: ', $all_programs_blank, 'program_id',$program_id ,false)); ?>
-            </form>
-        </td>
+
 
         <?php 
         
