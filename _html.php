@@ -249,12 +249,23 @@
 		return $result;
 	}
 	function auto_text($prefix, $items, $name, $selected, $id=""){
-            $result = "$prefix<input type = 'text' name='$name' id='$id' value = '$selected' placeholder= 'course' list= 'list-$name'>\n";
+            if ($selected == '0'){
+                $result = "$prefix<input type = 'search' name='$name' id='$id' list= 'list-$name'>\n";
+            }else{
+                $result = "$prefix<input type = 'search' name='$name' value='$selected' id='$id' list= 'list-$name'>\n";
+            }
+            //$result = "$prefix<input type = 'search' name='$name' id='$id' list= 'list-$name'>\n";
             $result .="$prefix<datalist id='list-$name'\n>";
             foreach($items as $value=>$text){
-		$result .= "$prefix\t<option value='$text'></option>\n";
+                $selected_text = "";
+			if (strcmp($value, $selected) == 0)
+			{
+				$selected_text = " selected='selected'";
+			}
+                $result .= "$prefix\t<option value='$text'$selected_text>$text</option>\n";
             }
             $result .= "$prefix<\datalist>\n";
+            $result .= "'$selected'<\input>";
             return $result;
             
         }

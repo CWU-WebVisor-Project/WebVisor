@@ -561,21 +561,6 @@
 
 </form>
 
-   <form autocomplete="off" action="/action_page.php">
-  <div class="autocomplete" style="width:300px;">
-    <input id="myInput" type="text" name='Classes' placeholder="course" list='courses' selected ='TEST'>
-        <datalist id="courses">
-     <?php 
-        foreach ($all_classes as $option) {
-           echo '<option value=\''.$option.'\'>';
-        }
-     ?>
-  </datalist>
-  </div>
-    <input type='hidden'>
-</form>
-    
-
 <form action='student.php#student_plan' method='post' id='student_plan'>
 	<input type='hidden' name='student_id' value='<?php echo($student_id); ?>' />
 	<input type='hidden' name='program_id' value='<?php echo($program_id); ?>' />
