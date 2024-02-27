@@ -249,23 +249,25 @@
 		return $result;
 	}
 	function auto_text($prefix, $items, $name, $selected, $id=""){
-            if ($selected == '0'){
-                $result = "$prefix<input type = 'search' name='$name' id='$id' list= 'list-$name'>\n";
-            }else{
-                $result = "$prefix<input type = 'search' name='$name' value='$selected' id='$id' list= 'list-$name'>\n";
-            }
-            //$result = "$prefix<input type = 'search' name='$name' id='$id' list= 'list-$name'>\n";
-            $result .="$prefix<datalist id='list-$name'\n>";
-            foreach($items as $value=>$text){
-                $selected_text = "";
+		$dat_list ="$prefix<datalist id='list-$name'\n>";
+		$class_name ="";
+		foreach($items as $value=>$text){
 			if (strcmp($value, $selected) == 0)
 			{
-				$selected_text = " selected='selected'";
+				$class_name = $text;
 			}
-                $result .= "$prefix\t<option value='$text'$selected_text>$text</option>\n";
+			$dat_list.= "$prefix\t<option value='$text'>$text</option>\n";
+		}
+		$dat_list .= "$prefix<\datalist>\n";
+
+		if ($class_name== ''){
+                $result = "$prefix<input type = 'search' name='$name' id='$name' list= 'list-$name'>\n";
+            }else{
+                $result = "$prefix<input type = 'search' name='$name' value='$class_name' id='$id' list= 'list-$name'>\n";
             }
-            $result .= "$prefix<\datalist>\n";
-            $result .= "'$selected'<\input>";
+            //$result = "$prefix<input type = 'search' name='$name' id='$id' list= 'list-$name'>\n";
+            $result .= $dat_list;
+            $result .= "value='$class_name'<\input>";
             return $result;
             
         }

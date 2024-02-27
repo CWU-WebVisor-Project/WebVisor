@@ -1360,25 +1360,24 @@ function is_superuser($user_info)
 		WHERE
 			Classes.id=$id
 			;";
-/*
-		if ($program_id != 0)
-		{
-			$query_string = "
-			SELECT
-				Classes.*,
-				Program_Classes.minimum_grade
-			FROM
-				Classes
-				LEFT JOIN Program_Classes ON Program_Classes.class_id=Classes.id
-			WHERE
-				Classes.id=$id
-			;";
-		}
-*/
+		/*
+                if ($program_id != 0)
+                {
+                    $query_string = "
+                    SELECT
+                        Classes.*,
+                        Program_Classes.minimum_grade
+                    FROM
+                        Classes
+                        LEFT JOIN Program_Classes ON Program_Classes.class_id=Classes.id
+                    WHERE
+                        Classes.id=$id
+                    ;";
+                }
+        */
 		$query_result = my_query($query_string, false);
 		return mysqli_fetch_assoc($query_result);
 	}
-
 	// $result['catalog_year']['catalog_term'] = array of students in the course that term
 	// e.g., "2016 => (1 = > (Joe Smith, Fred Johnson), 3 => (Jane Doe, Fred Johnson))"
 	function get_class_rosters($id)
