@@ -248,7 +248,7 @@
 		
 		return $result;
 	}
-	function auto_text($prefix, $items, $name, $selected, $id=""){
+	function auto_text($prefix, $items, $name, $selected, $id="", $submit=false, $tabindex=""){
 		$dat_list ="$prefix<datalist id='list-$name'\n>";
 		$class_name ="";
 		foreach($items as $value=>$text){
@@ -261,14 +261,28 @@
 		$dat_list .= "$prefix<\datalist>\n";
 
 		if ($class_name== ''){
-                $result = "$prefix<input type = 'search' name='$name' id='$name' list= 'list-$name'>\n";
+                $result = "$prefix<input type = 'search' name='$name' id='$name' list= 'list-$name'\n";
             }else{
-                $result = "$prefix<input type = 'search' name='$name' value='$class_name' id='$id' list= 'list-$name'>\n";
+                $result = "$prefix<input type = 'search' name='$name' value='$class_name' id='$id' list= 'list-$name'\n";
             }
+		if ($submit)
+		{
+			//! @todo need to implement this
+			$result .= " onchange='this.form.submit()'";
+		}
+		else
+		{
+			$result .= " onchange='changed(this)'";
+		}
+		if ($tabindex != "")
+		{
+			$result .= "tabindex='$tabindex'";
+		}
+		$result .= ">\n";
             //$result = "$prefix<input type = 'search' name='$name' id='$id' list= 'list-$name'>\n";
-            $result .= $dat_list;
-            $result .= "value='$class_name'<\input>";
-            return $result;
+		$result .= $dat_list;
+		$result .= "value='$class_name'<\input>";
+		return $result;
             
         }
 	function checkbox($prefix, $name, $checked)
