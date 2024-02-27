@@ -5,55 +5,64 @@
 <?php
 	include("_sql.php");
 	include("_html.php");
-	
-	$login = extract_string($_POST, 'user_login');
-	$password = extract_string($_POST, 'user_password');
-	
-	if(isset($_POST['logout']))
-	{
-		setcookie('webvisor_login', '', time() - 1);
-		setcookie('webvisor_password', '', time() - 1);
-	}
-	else
-	{
-		$user_info = get_user_info($login, $password, true, true);
-	}
 
-	if ($user_info)
-	{
-		if (isset($_POST['update']))
-		{
-			$new_password = extract_string($_POST, 'new_pass');
-			$new_password_2 = extract_string($_POST, 'new_pass_2');
-			$name = extract_string($_POST, 'advisor');
-			$program_id = extract_int($_POST, 'program_id');
-			
-			if ($new_password != $new_password_2)
-			{
-				$new_password = $password;
-			}
-			$user_id = $user_info['id'];
-			update_user($user_id, $new_password, $name, $program_id);
-			$user_info = get_user_info($login, $password, '', true);
-		}
-		
-		$program_id = $user_info['program_id'];
-		$advisor_name = $user_info['name'];
-		
-		$all_programs = array('0' => '') + all_programs();
-	}
+    $user_info = array();
+    $login = extract_string($_POST, 'user_login');
+    $password = extract_string($_POST, 'user_password');
+
+if(isset($_POST['logout'])) {
+    setcookie('webvisor_login', '', time() - 1);
+    setcookie('webvisor_password', '', time() - 1);
+} else {
+    $user_info = get_user_info($login, $password, true, true);
+}
+
+if ($user_info) {
+    if (isset($_POST['update'])) {
+        $new_password = extract_string($_POST, 'new_pass');
+        $new_password_2 = extract_string($_POST, 'new_pass_2');
+        $name = extract_string($_POST, 'advisor');
+        $program_id = extract_int($_POST, 'program_id');
+
+        if ($new_password === $new_password_2 && !empty($new_password)) {
+            // Hash the new password before updating it
+            $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
+        } else {
+            // If passwords do not match or new password is empty, keep the old password
+            // Assuming you have the original password hashed in the database, in which case,
+            // you need the hashed password here. If you only have the plain password, you'll need
+            // to hash it as shown below. This is not a secure practice; it's better to also get the hashed password.
+            $hashed_new_password = password_hash($password, PASSWORD_DEFAULT);
+        }
+        $user_id = $user_info['id'];
+        update_user($user_id, $hashed_new_password, $name, $program_id);
+        // After updating, get user info might need to work with hashed passwords or you adjust the logic accordingly
+        $user_info = get_user_info($login, $password, '', true);
+    }
+
+    if (is_array($user_info)) {
+        $program_id = $user_info['program_id'];
+        $advisor_name = $user_info['name'];
+    } else {
+        // Handle the case where $user_info is not an array.
+        // This might include setting default values or handling an error condition.
+        $program_id = null; // or a default value
+        $advisor_name = ''; // or a default value
+    }
+
+    $all_programs = array('0' => '') + all_programs();
+}
 ?>
-	<title>Settings</title>
-	<link rel='stylesheet' type='text/css' href='_style.css' />
+    <title>Settings</title>
+    <link rel='stylesheet' type='text/css' href='_style.css' />
 </head>
 <body>
 
 <?php
-	if (true || $connected)
-	{
-		echo(messages());
-		echo(linkmenu());
-	}
+if (true || $connected) {
+    echo(messages());
+    echo(linkmenu());
+}
 ?>
 
 <h1>Settings</h1>
@@ -67,7 +76,7 @@
 }
 ?>
 
-	<form method='post'>
+    <form method="post" onsubmit="return validatePassword()">
 		<table class='input'>
 <?php
 	if (!$user_info)
@@ -77,12 +86,15 @@
 				<td>User Login</td>
 				<td><input type='text' name='user_login' value='<?php echo($login); ?>' /></td>
 			</tr>
-			<tr>
-				<td>User Password</td>
-				<td><input type='password' name='user_password' value='<?php echo($password); ?>' /></td>
-			</tr>
-			<tr>
-				<td />
+            <tr>
+                <td>User Password</td>
+                <td>
+                    <input type='password' id='user_password' name='user_password' />
+                    <button type="button" onclick="togglePasswordVisibility('user_password')">Show/Hide Password</button>
+                </td>
+            </tr>
+            <tr>
+				<td/>
 				<td><input type='submit' name='login' value='Login' /></td>
 			</tr>
 <?php
@@ -97,15 +109,19 @@
 			<tr>
 			<tr>
 				<td colspan='3' style='background-color:white;' />
-			<tr>
-				<td>Enter New Password</td>
-				<td><input type='text' name='new_pass' /></td>
-				<td />
-			</tr>
+            <tr>
+                <td>Enter New Password</td>
+                <td>
+                    <input type='password' id='new_pass' name='new_pass' />
+                    <button type="button" onclick="togglePasswordVisibility('new_pass')">Show/Hide Password</button>
+                </td>
+            </tr>
 			<tr>
 				<td>Retype New Password</td>
-				<td><input type='text' name='new_pass_2' /></td>
-				<td />
+                <td>
+                    <input type='password' id='new_pass2' name='new_pass2' />
+                    <button type="button" onclick="togglePasswordVisibility('new_pass2')">Show/Hide Password</button>
+                </td>
 			</tr>
 			<tr>
 				<td>Advisor Name</td>
@@ -128,7 +144,81 @@
 		</table>
 
 	</form>
-	
+<?php
+// Assume is_superuser function definition is elsewhere and returns a boolean
+if (is_superuser($user_info)) {
+    echo '<h2>Add New User</h2>';
+    ?>
+    <form method="post" action=""> <!-- Submit to the same script -->
+        <table class="input">
+            <tr>
+                <td>User Login</td>
+                <td><input type="text" name="new_user_login" required /></td>
+            </tr>
+            <tr>
+                <td>User Password</td>
+                <td>
+                    <input type='password' id='new_user_pass' name='new_user_pass' />
+                    <button type="button" onclick="togglePasswordVisibility('new_user_pass')">Show/Hide Password</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Name</td>
+                <td><input type="text" name="new_user_name" required /></td>
+            </tr>
+            <tr>
+                <td>First Name</td>
+                <td><input type="text" name="new_user_first" required /></td>
+            </tr>
+            <tr>
+                <td>Last Name</td>
+                <td><input type="text" name="new_user_last" required /></td>
+            </tr>
+            <tr>
+                <td>Role</td>
+                <td>
+                    <select name="new_user_role">
+                        <option value="0">Not a Superuser</option>
+                        <option value="1">Superuser</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="submit" name="add_user" value="Add User" /></td>
+            </tr>
+        </table>
+    </form>
+    <?php
+    if (isset($_POST['add_user']) && !empty($_POST['new_user_login']) && !empty($_POST['new_user_password'])) {
+        // Ensuring all listed fields are set and not blank
+        $requiredFields = ['new_user_login', 'new_user_password', 'new_user_name', 'new_user_first', 'new_user_last'];
+        $allFieldsPresent = true;
+        foreach ($requiredFields as $field) {
+            if (empty($_POST[$field])) {
+                $allFieldsPresent = false;
+                echo "<p>Error: '$field' is required and cannot be blank.</p>";
+                break;
+            }
+        }
+
+        if ($allFieldsPresent) {
+            // Proceed with form processing
+            $login = $_POST['new_user_login'];
+            $password = $_POST['new_user_password']; // Consider hashing the password here
+            $name = $_POST['new_user_name'];
+            $first = $_POST['new_user_first'];
+            $last = $_POST['new_user_last'];
+            $superuser = ($_POST['new_user_role'] === '1') ? 'Yes' : 'No';
+
+            // Call to add_user function
+            add_user(null, $login, $password, $name, null, $superuser, $last, $first);
+        }
+    }
+}
+?>
+
+
 <?php
 	if (false)
 	{
@@ -174,3 +264,14 @@
 ?>	
 </body>
 </html>
+<script>
+    function togglePasswordVisibility(fieldId) {
+        var field = document.getElementById(fieldId);
+        if (field.type === "password") {
+            field.type = "text";
+        } else {
+            field.type = "password";
+        }
+    }
+</script>
+
