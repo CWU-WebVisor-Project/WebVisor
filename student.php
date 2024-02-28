@@ -115,15 +115,18 @@
 		$classes = array();
 		foreach($_POST as $key => $value)
 		{
+            //slot-$slot_name
+            //slot-20232-4
 			$matches = array();
 			if (preg_match('/slot-([0-9][0-9][0-9][0-9][0-9])-([0-9])/', $key, $matches))
 			{
-				$class_id = $value;
-				if ($class_id == 0)
-				{
-					continue;
-				}
-				
+                //$class_id_pull = get_class_id($value);
+                //$class_id = $class_id_pull['id'];
+				//if ($class_id == 0)
+				//{
+				//	continue;
+				//}
+				$class_id=$value;
 				if ($class_id == 1)
 				{
 					$new_name = $_POST['new_name'];
@@ -138,7 +141,7 @@
 				{
 					$classes[$class_id] = array();
 				}
-				$classes[$class_id][] = array($term, $slot, $elective);
+				$classes[$class_id][]= array($term, $slot, $elective);
 			}
 		}
 		
@@ -674,6 +677,7 @@
                 }
  
                 $slot_name = "$year$term_number-$j";
+                //echo($slot_name);
                 $class_menu = "<span$style$title>".auto_text("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
                 $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $is_elective)."\n" : '';
                 echo("<span style='white-space:nowrap;'>$class_menu$elective_checkbox</span>");

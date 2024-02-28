@@ -258,7 +258,7 @@
 			}
 			$dat_list.= "$prefix\t<option value='$text'>$text</option>\n";
 		}
-		$dat_list .= "$prefix<\datalist>\n";
+		$dat_list .= "$prefix</datalist>\n";
 
 		if ($class_name== ''){
                 $result = "$prefix<input type = 'search' name='$name' id='$name' list= 'list-$name'\n";
@@ -279,11 +279,9 @@
 			$result .= "tabindex='$tabindex'";
 		}
 		$result .= ">\n";
-            //$result = "$prefix<input type = 'search' name='$name' id='$id' list= 'list-$name'>\n";
 		$result .= $dat_list;
-		$result .= "value='$class_name'<\input>";
 		return $result;
-            
+
         }
 	function checkbox($prefix, $name, $checked)
 	{
