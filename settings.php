@@ -149,11 +149,11 @@ if (true || $connected) {
 if (is_superuser($user_info)) {
     echo '<h2>Add New User</h2>';
     ?>
-    <form method="post" action="">
+    <form method="post" action=""> <!-- Submit to the same script -->
         <table class="input">
             <tr>
                 <td>User Login</td>
-                <td><input type="text" name="new_user_login" /></td>
+                <td><input type="text" name="new_user_login" required /></td>
             </tr>
             <tr>
                 <td>User Password</td>
@@ -164,15 +164,15 @@ if (is_superuser($user_info)) {
             </tr>
             <tr>
                 <td>Name</td>
-                <td><input type="text" name="new_user_name" /></td>
+                <td><input type="text" name="new_user_name" required /></td>
             </tr>
             <tr>
                 <td>First Name</td>
-                <td><input type="text" name="new_user_first"  /></td>
+                <td><input type="text" name="new_user_first" required /></td>
             </tr>
             <tr>
                 <td>Last Name</td>
-                <td><input type="text" name="new_user_last"  /></td>
+                <td><input type="text" name="new_user_last" required /></td>
             </tr>
             <tr>
                 <td>Role</td>
@@ -203,6 +203,7 @@ if (is_superuser($user_info)) {
         }
 
         if ($allFieldsPresent) {
+            // Proceed with form processing
             $login = $_POST['new_user_login'];
             $password = $_POST['new_user_password']; // Consider hashing the password here
             $name = $_POST['new_user_name'];
@@ -210,6 +211,7 @@ if (is_superuser($user_info)) {
             $last = $_POST['new_user_last'];
             $superuser = ($_POST['new_user_role'] === '1') ? 'Yes' : 'No';
 
+            // Call to add_user function
             add_user(null, $login, $password, $name, null, $superuser, $last, $first);
         }
     }
