@@ -3,14 +3,24 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<link rel='stylesheet' type='text/css' href='_style.css' />
-<?php
+    <link href="https://cdn.jsdelivr.net/npm/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js"></script>
+
+    <?php
     global $YES;
 	include_once("_html.php");
 	include_once("_sql.php");
-	
-	$user_info = get_user_info();
-    	$user_id = $user_info['id'];
-	$superuser = is_superuser($user_info);
+
+    $user_info = get_user_info();
+    if (is_array($user_info)) {
+        $user_id = $user_info['id'];
+        $superuser = is_superuser($user_info);
+    } else {
+        // Handle the error or set default values
+        $user_id = null; // or a default/fallback value
+        $superuser = false; // Assuming false as a default if not a superuser
+    }
 	
 	if (!$user_info || !$superuser)
 	{

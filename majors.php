@@ -2,6 +2,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js"></script>
 <?php
 	
 	include_once("_html.php");
@@ -26,6 +30,32 @@
 ?>
 </head>
 <body>
+<style>
+
+
+    table {
+        margin-top: 20px;
+        width: 100%;
+    }
+
+    th, td {
+        text-align: left;
+        padding: 8px;
+        margin-top: 10px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+        margin-top: 10px;
+    }
+
+    .select2-container {
+        margin-bottom: 10px;
+        margin-top: 10px;
+        width: 20% !important;
+    }
+
+</style>
 
 <?php
 	echo(messages());
@@ -33,7 +63,16 @@
 ?>
 
 	<form action='majors.php' method='get'>
-<?php echo(array_menu("\t\t", $all_programs_blank, 'program_id', $program_id, false)); ?>
+        <td>
+            <select id="program_id" name="program_id" class="select2-class">
+                <option value=""></option>
+                <?php foreach ($all_programs_blank as $value => $label): ?>
+                    <option value="<?php echo htmlspecialchars($value); ?>">
+                        <?php echo htmlspecialchars($label); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </td>
 		<br />
 		<input type='submit' /> 
 	</form>
@@ -52,3 +91,25 @@
 	</table>
 </body>
 </html>
+<script>
+    $(document).ready(function() {
+        // Initialize the Select2 dropdown
+        $('#program_id').select2({
+            placeholder: "Select a program",
+            allowClear: true
+        });
+
+        // Check if a previously selected value is stored and set it
+        var selectedProgram = localStorage.getItem('selectedProgram');
+        if (selectedProgram) {
+            $('#program_id').val(selectedProgram).trigger('change');
+        }
+
+        // Save the selected value when it changes
+        $('#program_id').on('change', function() {
+            var selectedValue = $(this).val();
+            localStorage.setItem('selectedProgram', selectedValue);
+        });
+    });
+</script>
+

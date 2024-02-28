@@ -68,13 +68,52 @@ function get_user_info($login = '', $password = '', $setCookies = true)
 	}
 }
 
+	function add_user($id, $login, $password, $name, $program_id, $superuser, $last, $first) {
 
-function is_superuser($user_info)
-	{
-		global $YES;
-		return ($user_info['superuser'] == $YES);
+		global $link;
+		// Assume $mysqli is your MySQLi connection instance from the previous example.
+
+		// Sanitize input (basic example, consider more thorough cleaning depending on context)
+		$login = filter_var($login, FILTER_SANITIZE_STRING);
+		$name = filter_var($name, FILTER_SANITIZE_STRING);
+		$last = filter_var($last, FILTER_SANITIZE_STRING);
+		$first = filter_var($first, FILTER_SANITIZE_STRING);
+		// For 'id', 'program_id', and 'superuser', ensure they are integers or booleans as expected.
+		// Password should be hashed for security reasons, not just sanitized.
+
+		// Hash the password
+		$passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+		// Convert 'superuser' to a more standard boolean/integer representation if needed
+		$superuserValue = $superuser == '1' ? 'yes' : 'no';
+
+		// Prepare the SQL statement
+		$stmt = $link->prepare("INSERT INTO users (id, login, password, name, program_id, superuser, last, first) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+
+		// Bind parameters to the prepared statement
+		// 'i' denotes integer, 's' denotes string
+		$stmt->bind_param("isssisss", $id, $login, $passwordHash, $name, $program_id, $superuserValue, $last, $first);
+
+		// Execute the prepared statement
+		if ($stmt->execute()) {
+			echo "New user added successfully";
+		} else {
+			echo "Error: " . $stmt->error;
+		}
+		// Close statement and connection
+		$stmt->close();
 	}
 
+function is_superuser($user_info)
+{
+	global $YES;
+	// Check if $user_info is an array and has the 'superuser' key
+	if (is_array($user_info) && isset($user_info['superuser'])) {
+		return ($user_info['superuser'] == $YES);
+	}
+	// Return false or a suitable default if $user_info is not an array or doesn't have 'superuser'
+	return false;
+}
 	function update_user($user_id, $password, $name, $program_id)
 	{
 		$query_string = "
@@ -782,7 +821,7 @@ function is_superuser($user_info)
 
 	function remove_replacement($program_id, $replaced_id, $replacement_id)
 	{
-		global $link;
+		global $link, $user_id;
 		$query_string = "
 		DELETE FROM Replacement_Classes
 		WHERE
@@ -911,6 +950,7 @@ function is_superuser($user_info)
 
 		if ($changes > 0)
 		{
+			$checklist_id = null;
 			$note = "Updated <checklist:$checklist_id> for <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
@@ -942,6 +982,7 @@ function is_superuser($user_info)
 
 		if (mysqli_affected_rows($link) > 0)
 		{
+			$checklist_id = null;
 			$note = "Added item to <checklist:$checklist_id> for <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
@@ -1286,42 +1327,59 @@ function is_superuser($user_info)
 
 	function update_prereqs($class_id, $prereq_ids, $required_grades)
 	{
+		// Delete existing prerequisites
 		$query_string = "
 		DELETE FROM
 			Prerequisites
 		WHERE
 			class_id=$class_id
 		;";
-		$query_result = my_query($query_string, false);
+		my_query($query_string, false);
 
-		foreach($prereq_ids as $prereq_id)
-		{
-			$query_string = "
-			INSERT INTO Prerequisites
-				(class_id, prerequisite_id)
-			VALUES
-				($class_id, $prereq_id)
-			;";
-			$query_result = my_query($query_string, false);
-		}
+		// Ensure $prereq_ids is an array
+		$prereq_ids = (array) $prereq_ids;
 
-		foreach ($required_grades as $prereq_id => $minimum_grade)
-		{
-			if ($minimum_grade > 0)
-			{
+		// Consolidate insert operations
+		foreach($prereq_ids as $prereq_id) {
+			// Check if a grade is specified for this prereq_id
+			$minimum_grade = isset($required_grades[$prereq_id]) ? $required_grades[$prereq_id] : 'NULL';
+
+			// Check if class_id and prereq_id exist in the classes table (pseudo-code)
+			if (check_class_exists($class_id) && check_class_exists($prereq_id)) {
+				// Adjusted query to handle potential NULL minimum_grade
 				$query_string = "
 				INSERT INTO Prerequisites
 					(class_id, prerequisite_id, minimum_grade)
 				VALUES
 					($class_id, $prereq_id, $minimum_grade)
+				ON DUPLICATE KEY UPDATE
+					minimum_grade = VALUES(minimum_grade)
 				;";
-
-				$query_result = my_query($query_string, false);
+				my_query($query_string, false);
 			}
 		}
 	}
 
-	function get_prereqs($class_id)
+	function check_class_exists($class_id) {
+		// Prepare the SQL query to check if the class_id exists in the classes table
+		$query_string = "SELECT COUNT(*) FROM classes WHERE id = $class_id";
+
+		// Execute the query
+		$query_result = my_query($query_string, false); // Assuming my_query executes the query and returns the result
+
+		// Fetch the result. Assuming my_query returns a mysqli_result object
+		$row = mysqli_fetch_array($query_result);
+
+		// Check if the count is greater than 0, indicating the class_id exists
+		if ($row[0] > 0) {
+			return true; // class_id exists
+		} else {
+			return false; // class_id does not exist
+		}
+	}
+
+
+function get_prereqs($class_id)
 	{
 		$query_string = "
 		SELECT
@@ -1410,7 +1468,7 @@ function is_superuser($user_info)
 			{
 				$rosters[$catalog_year] = array();
 			}
-			if (!is_array($rosters[$catalog_year][$catalog_term]))
+			if (isset($rosters[$catalog_year]) && is_array($rosters[$catalog_year]) && isset($rosters[$catalog_year][$catalog_term]) && !is_array($rosters[$catalog_year][$catalog_term]))
 			{
 				$rosters[$catalog_year][$catalog_term] = array();
 			}
