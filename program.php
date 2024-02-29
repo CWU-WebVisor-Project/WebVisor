@@ -227,9 +227,9 @@
 	if ($program_id != 0)
 	{
 ?>
-
+<div, style="display: flex; flex: 1; flex-direction: row">
+<div>
 	<h2>Program Information</h2>
-	
 	<table class='input'>
 		<tr>
 			<td>Major &amp; Year:</td>
@@ -325,9 +325,66 @@
 			<td colspan='8'><input type='submit' name='update_program' value='Update Program Info' /></td>
 		</tr>
 	</table>
+	</div>
+	<div style="margin-left: auto; margin-right: auto">
+ <h2>Electives</h2>
+ <table class='input'>
+
+
+		<tr>
+			<td />
+			<td>Name</td>
+			<td>Sequencing</td>
+			<td>Minimum Grade</td>
+			<td>Delete</td>
+			<td />
+		</tr>
+<?php
 	
+		$row_num = 1;
+		foreach($program_classes as $id => $info)
+		{
+			$name = $info['name_credits'];
+			$min = $info['minimum_grade'];
+			$seqno = $info['sequence_no'];
+			$required = $info['required'];
+			$class='';
+
+			if ($required == $YES)
+			{
+				continue;
+			}
+
+			if (($row_num % 2) == 1)
+			{
+				$class = "class='alt'";
+			}
+			$row_num++;
+?>
+		<tr>
+			<td />
+			<td <?php echo($class); ?>><?php echo($name); ?></td>
+			<td <?php echo($class); ?> align='center'>
+<?php echo(array_menu("\t\t\t\t", $all_seqnos, "seqno-$id", $seqno)); ?>
+			</td>
+			<td <?php echo($class); ?> align='center'>
+<?php echo(array_menu("\t\t\t\t", $all_grades, "grade-$id", $min)); ?>
+			</td>
+
+			<td <?php echo($class); ?> align='center'>
+<?php echo(checkbox("\t\t\t\t", "delete-$id", false)); ?>
+			</td>
+			<td />
+		</tr>
+<?php
+		}	
+?>
+	</table>
+	</div>
+</div>
+
+<div >
 <h2>Templates</h2>
-	
 	<table class='input'>
 		<tr>
 			<td><input type='submit' name='create_template' value='Create:' /></td>
@@ -358,7 +415,7 @@
 	}
 ?>
 	</table>
-	
+
 <h2>Substitutions</h2>
 	
 	<table class='input'>
@@ -435,6 +492,7 @@
 			</td>
 		</tr>
 	</table>	
+	</div>
 
 </form>
 
