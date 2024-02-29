@@ -162,6 +162,13 @@ if (is_superuser($user_info)) {
                 </td>
             </tr>
             <tr>
+                <td>Confirm User Password</td>
+                <td>
+                    <input type='password' id='new_user_pass_confirm' name='new_user_pass_confirm' />
+                    <button type="button" onclick="togglePasswordVisibility('new_user_pass_confirm')">Show/Hide Password</button>
+                </td>
+            </tr>
+            <tr>
                 <td>Name</td>
                 <td><input type="text" name="new_user_name" /></td>
             </tr>
@@ -205,13 +212,17 @@ if (is_superuser($user_info)) {
             // Proceed with form processing
             $login = $_POST['new_user_login'];
             $password = $_POST['new_user_pass']; // Consider hashing the password here
+            $password_confirm = $_POST['new_user_pass_confirm'];
             $name = $_POST['new_user_name'];
             $first = $_POST['new_user_first'];
             $last = $_POST['new_user_last'];
-            $superuser = ($_POST['new_user_role'] === '1') ? 'Yes' : 'No';
-
-            // Call to add_user function
-            add_user(null, $login, $password, $name, null, $superuser, $last, $first);
+            $superuser = ($_POST['new_user_role'] === "1") ? "Yes" : "No";
+            if ($password === $password_confirm) {
+                add_user(null, $login, $password, $name, null, $superuser, $last, $first);
+            }
+            else {
+                echo "Passwords do not match";
+            }
         }
     }
 }

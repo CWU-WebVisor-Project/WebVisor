@@ -85,7 +85,7 @@ function get_user_info($login = '', $password = '', $setCookies = true)
 		$passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
 		// Convert 'superuser' to a more standard boolean/integer representation if needed
-		$superuserValue = $superuser == '1' ? 'yes' : 'no';
+		$superuserValue = $superuser == "Yes" ? "Yes" : "No";
 
 		// Prepare the SQL statement
 		$stmt = $link->prepare("INSERT INTO users (id, login, password, name, program_id, superuser, last, first) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
