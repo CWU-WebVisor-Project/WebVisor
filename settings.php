@@ -1,80 +1,79 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-<?php
-	include("_sql.php");
-	include("_html.php");
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <?php
+    include("_sql.php");
+    include("_html.php");
+
+    session_start(); // Ensure session is started for managing user login status
 
     $user_info = array();
     $login = extract_string($_POST, 'user_login');
     $password = extract_string($_POST, 'user_password');
+    $message = ""; // Variable to hold messages for the user
 
-if(isset($_POST['logout'])) {
-    setcookie('webvisor_login', '', time() - 1);
-    setcookie('webvisor_password', '', time() - 1);
-} else {
-    $user_info = get_user_info($login, $password, true, true);
-}
-
-if ($user_info) {
-    if (isset($_POST['update'])) {
-        $new_password = extract_string($_POST, 'new_pass');
-        $new_password_2 = extract_string($_POST, 'new_pass_2');
-        $name = extract_string($_POST, 'advisor');
-        $program_id = extract_int($_POST, 'program_id');
-
-        if ($new_password === $new_password_2 && !empty($new_password)) {
-            // Hash the new password before updating it
-            $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
-        } else {
-            // If passwords do not match or new password is empty, keep the old password
-            // Assuming you have the original password hashed in the database, in which case,
-            // you need the hashed password here. If you only have the plain password, you'll need
-            // to hash it as shown below. This is not a secure practice; it's better to also get the hashed password.
-            $hashed_new_password = password_hash($password, PASSWORD_DEFAULT);
-        }
-        $user_id = $user_info['id'];
-        update_user($user_id, $hashed_new_password, $name, $program_id);
-        // After updating, get user info might need to work with hashed passwords or you adjust the logic accordingly
-        $user_info = get_user_info($login, $password, '', true);
-    }
-
-    if (is_array($user_info)) {
-        $program_id = $user_info['program_id'];
-        $advisor_name = $user_info['name'];
+    if(isset($_POST['logout'])) {
+        setcookie('webvisor_login', '', time() - 1);
+        setcookie('webvisor_password', '', time() - 1);
+        $_SESSION['logged_in'] = false; // Adjust session to reflect logout
     } else {
-        // Handle the case where $user_info is not an array.
-        // This might include setting default values or handling an error condition.
-        $program_id = null; // or a default value
-        $advisor_name = ''; // or a default value
+        $user_info = get_user_info($login, $password, true, true);
     }
 
-    $all_programs = array('0' => '') + all_programs();
-}
-?>
+    if ($user_info) {
+        if (isset($_POST['update'])) {
+            $new_password = extract_string($_POST, 'new_pass');
+            $new_password_2 = extract_string($_POST, 'new_pass2');
+            $name = extract_string($_POST, 'advisor');
+            $program_id = extract_int($_POST, 'program_id');
+
+            if ($new_password === $new_password_2 && !empty($new_password)) {
+                $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
+                $user_id = $user_info['id'];
+                $update_success = update_user($user_id, $hashed_new_password, $name, $program_id);
+
+                if ($update_success) {
+                    $message = "Password updated successfully.";
+                    $_SESSION['user_password'] = $hashed_new_password; // Update session with new password if needed
+                } else {
+                    $message = "Failed to update password. Please try again.";
+                }
+            } else {
+                $message = "Passwords do not match or new password is empty.";
+            }
+        }
+
+        if (is_array($user_info)) {
+            $program_id = $user_info['program_id'];
+            $advisor_name = $user_info['name'];
+        } else {
+            $program_id = null;
+            $advisor_name = '';
+        }
+
+        $all_programs = array('0' => '') + all_programs();
+    }
+    ?>
     <title>Settings</title>
     <link rel='stylesheet' type='text/css' href='_style.css' />
 </head>
 <body>
 
 <?php
-if (true || $connected) {
-    echo(messages());
-    echo(linkmenu());
+if (true || $connected) { // Ensure $connected is defined and true to display messages and menu
+    echo messages(); // Assuming this function prints session or other messages
+    echo linkmenu(); // Navigation menu
 }
 ?>
 
 <h1>Settings</h1>
 
-<?php if ($user_info) {
-?>
+<?php if ($user_info) { ?>
 	<p>If you see this, you are connected to the system. You can log out (and delete the cookie with your username and password) by selecting "Logout". This causes the browser you are using to delete the login information for you. You do not need to update anything on this page, but this is the page you would change it on if you decide to update the password.</p>
 	
 	<p>If you are not a superuser, you should only be able to access the <b>Student Information</b>, <b>Enrollments</b>, <b>Lost Students</b>, and <b>Settings</b> page.
-<?php
-}
-?>
+<?php } ?>
 
     <form method="post" onsubmit="return validatePassword()">
 		<table class='input'>
@@ -190,9 +189,9 @@ if (is_superuser($user_info)) {
         </table>
     </form>
     <?php
-    if (isset($_POST['add_user']) && !empty($_POST['new_user_login']) && !empty($_POST['new_user_password'])) {
+    if (isset($_POST['add_user']) && !empty($_POST['new_user_login']) && !empty($_POST['new_user_pass'])) {
         // Ensuring all listed fields are set and not blank
-        $requiredFields = ['new_user_login', 'new_user_password', 'new_user_name', 'new_user_first', 'new_user_last'];
+        $requiredFields = ['new_user_login', 'new_user_pass', 'new_user_name', 'new_user_first', 'new_user_last'];
         $allFieldsPresent = true;
         foreach ($requiredFields as $field) {
             if (empty($_POST[$field])) {
@@ -205,7 +204,7 @@ if (is_superuser($user_info)) {
         if ($allFieldsPresent) {
             // Proceed with form processing
             $login = $_POST['new_user_login'];
-            $password = $_POST['new_user_password']; // Consider hashing the password here
+            $password = $_POST['new_user_pass']; // Consider hashing the password here
             $name = $_POST['new_user_name'];
             $first = $_POST['new_user_first'];
             $last = $_POST['new_user_last'];

@@ -114,34 +114,49 @@ function is_superuser($user_info)
 	// Return false or a suitable default if $user_info is not an array or doesn't have 'superuser'
 	return false;
 }
-	function update_user($user_id, $password, $name, $program_id)
-	{
-		$query_string = "
-			UPDATE
-				Users
-			SET
-				name='$name',
-				program_id=$program_id
-			WHERE
-				id=$user_id
-			;";
-		$query_result = my_query($query_string, false);
+	function update_user($user_id, $password, $name, $program_id) {
+		global $link; // Assuming $link is your mysqli connection object
 
-		if ($password != '')
-		{
-			$query_string = "
-				UPDATE
-					Users
-				SET
-					password='$password'
-				WHERE
-					id=$user_id
-			;";
-			$query_result = my_query($query_string, false);
+		// Initialize the base query
+		$query_string = "UPDATE Users SET password=?, name=?";
+		$types = "ss"; // Types for password and name
+		$params = [$password, $name]; // Parameters array
+
+		// Check if program_id is valid and should be included in the update
+		if (isset($program_id) && $program_id > 0) {
+			$query_string .= ", program_id=?";
+			$types .= "i"; // Adding integer type for program_id
+			$params[] = $program_id; // Adding program_id to parameters array
 		}
+
+		$query_string .= " WHERE id=?";
+		$types .= "i"; // Adding integer type for user_id
+		$params[] = $user_id; // Adding user_id to parameters array
+
+		// Prepare the statement
+		$stmt = mysqli_prepare($link, $query_string);
+		if (!$stmt) {
+			echo "Prepare failed: (" . mysqli_errno($link) . ") " . mysqli_error($link);
+			return false;
+		}
+
+		// Dynamically bind parameters
+		mysqli_stmt_bind_param($stmt, $types, ...$params);
+
+		// Execute the query
+		if (!mysqli_stmt_execute($stmt)) {
+			echo "Execute failed: (" . mysqli_stmt_errno($stmt) . ") " . mysqli_stmt_error($stmt);
+			return false;
+		}
+
+		// Close the statement
+		mysqli_stmt_close($stmt);
+
+		return true; // Indicate success
 	}
 
-	function all_users()
+
+function all_users()
 	{
 		$query_string = "
 		SELECT
