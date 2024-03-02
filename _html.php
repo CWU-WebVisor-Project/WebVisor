@@ -262,9 +262,9 @@
 
 		if ($class_name== ''){
                 $result = "$prefix<input type = 'search' name='$name' id='$name' list= 'list-$name'\n";
-            }else{
+		}else{
                 $result = "$prefix<input type = 'search' name='$name' value='$class_name' id='$id' list= 'list-$name'\n";
-            }
+		}
 		if ($submit)
 		{
 			//! @todo need to implement this
@@ -280,6 +280,7 @@
 		}
 		$result .= ">\n";
 		$result .= $dat_list;
+		$result .= "</input>";
 		return $result;
 
         }

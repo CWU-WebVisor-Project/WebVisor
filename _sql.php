@@ -1383,14 +1383,24 @@ function get_class_id($name, $program_id=0)
 		// Handle invalid $id, perhaps return null or throw an exception
 		return null;
 	}
-
+	$in_loc=-1;
+	if($name != 'NEW'){
+		for($i =0; $i<strlen($name);$i++){
+			if($name[$i]=='('){
+				$in_loc = $i;
+			}
+		}
+	}
+	if($in_loc != -1){
+		$name = substr($name,0,$in_loc-1);
+	}
 	$query_string = "
 		SELECT
 			id
 		FROM
 			Classes
 		WHERE
-			Classes.name=$name
+			Classes.name=\"$name\"
 			;";
 	/*
             if ($program_id != 0)

@@ -120,13 +120,16 @@
 			$matches = array();
 			if (preg_match('/slot-([0-9][0-9][0-9][0-9][0-9])-([0-9])/', $key, $matches))
 			{
-                //$class_id_pull = get_class_id($value);
-                //$class_id = $class_id_pull['id'];
-				//if ($class_id == 0)
-				//{
-				//	continue;
-				//}
-				$class_id=$value;
+                $class_id_pull = get_class_id($value);
+                $class_id = 0;
+                if(!is_null($class_id_pull)){
+                    $class_id = $class_id_pull['id'];
+                }
+
+				if ($class_id == 0)
+				{
+				    continue;
+				}
 				if ($class_id == 1)
 				{
 					$new_name = $_POST['new_name'];
