@@ -351,7 +351,6 @@
 			<td>Name</td>
 			<td>Sequencing</td>
 			<td>Minimum Grade</td>
-			<td>Delete</td>
 			<td />
 		</tr>
 <?php
@@ -386,9 +385,6 @@
 <?php echo(array_menu("\t\t\t\t", $all_grades, "grade-$id", $min)); ?>
 			</td>
 
-			<td <?php echo($class); ?> align='center'>
-<?php echo(checkbox("\t\t\t\t", "delete-$id", false)); ?>
-			</td>
 			<td />
 		</tr>
 <?php
