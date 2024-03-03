@@ -6,17 +6,9 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js" type=""></script>
     <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js" type=""></script>
     <?php
-//    session_start();
-
+	
 	include_once("_html.php");
 	include_once("_sql.php");
-/*
-    if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        // Redirect to settings.php if not logged in
-        header('Location: settings.php');
-        exit; // Prevent further execution of the script
-    }
-*/
     global $YES;
 	
 	$user_info = get_user_info();
@@ -123,15 +115,21 @@
 		$classes = array();
 		foreach($_POST as $key => $value)
 		{
+            //slot-$slot_name
+            //slot-20232-4
 			$matches = array();
 			if (preg_match('/slot-([0-9][0-9][0-9][0-9][0-9])-([0-9])/', $key, $matches))
 			{
-				$class_id = $value;
+                $class_id_pull = get_class_id($value);
+                $class_id = 0;
+                if(!is_null($class_id_pull)){
+                    $class_id = $class_id_pull['id'];
+                }
+
 				if ($class_id == 0)
 				{
-					continue;
+				    continue;
 				}
-				
 				if ($class_id == 1)
 				{
 					$new_name = $_POST['new_name'];
@@ -146,7 +144,7 @@
 				{
 					$classes[$class_id] = array();
 				}
-				$classes[$class_id][] = array($term, $slot, $elective);
+				$classes[$class_id][]= array($term, $slot, $elective);
 			}
 		}
 		
@@ -332,6 +330,7 @@
 <?php echo(messages()); ?>
 <?php echo(linkmenu()); ?>
 
+ 
 <h1>Student Plan</h1>
 
 <form action='student.php#message_end' method='post' id='select_student'>
@@ -571,7 +570,7 @@
 <form action='student.php#student_plan' method='post' id='student_plan'>
 	<input type='hidden' name='student_id' value='<?php echo($student_id); ?>' />
 	<input type='hidden' name='program_id' value='<?php echo($program_id); ?>' />
-
+        
 
 <h2>Student Plan</h2>
 	
@@ -588,6 +587,7 @@
 				starting Fall
 <?php echo(array_menu("\t\t\t\t", all_years(), 'template_year', $start_year, false)); ?>
 				<input type='submit' name='fill_template' value='Fill Classes'>
+                                 
 			</td>
 		</tr>
 <?php
@@ -673,17 +673,19 @@
                         $title = "title='Class not offered this term.'";
                     }
                     $term_credits += $class_info['credits'];
-                    $is_elective = $class_id != 0 && !array_key_exists($class_id, $required_classes) && $program_id != 0 && $program_elective_credits > 0 && $student_advisor && key_exists($class_id, get_program_classes($program_id));
-					$check_elective =  key_exists($student_class_id, $electives) ;
+                    $is_elective = $class_id != 0 && !array_key_exists($class_id, $required_classes) && $program_id != 0 && $program_elective_credits > 0 && $student_advisor && key_exists($student_class_id, $electives);
                 } else {
                     // Handle case when class_info is null, perhaps set default values or skip
                     $is_elective = false;
                 }
-
+ 
                 $slot_name = "$year$term_number-$j";
-                $class_menu = "<span$style$title>".array_menu("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
-                $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $check_elective)."\n" : '';
-                echo("<span>$class_menu$elective_checkbox</span>");
+
+                //echo($slot_name);
+                $class_menu = "<span$style$title>".auto_text("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
+                $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $is_elective)."\n" : '';
+                echo("<span style='white-space:nowrap;'>$class_menu$elective_checkbox</span>");
+ 
 ?>
 				<br />
 <?php
@@ -718,7 +720,7 @@
 <form action='student.php#program_requirements' method='post' id='program_requirements'>
 	<input type='hidden' name='student_id' value='<?php echo($student_id); ?>' />
 	<input type='hidden' name='program_id' value='<?php echo($program_id); ?>' />
-
+        
 	<h2>Program Requirements
 	</h2>
 	
@@ -749,8 +751,6 @@
 ?>
 		<tr>
 <?php
-			$elective_names = array();
-
 			foreach($required_classes as $required_id => $info)
 			{
 				$required_name = $info['name_credits'];
@@ -808,7 +808,7 @@
 			</td>
 <?php
 				++$col;
-                
+                $elective_names = array();
 				if ($col == 3)
 				{
 ?>

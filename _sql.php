@@ -211,7 +211,6 @@ function all_users()
 		global $PRINT_SQL;
 		global $EXECUTE_SQL;
 		global $link;
-
 		if ($print || $PRINT_SQL)
 		{
 			add_sql_message("$query_string");
@@ -229,7 +228,6 @@ function all_users()
 			$err_str = mysqli_error($link);
 			add_sql_message("ERROR: $err_no: $err_str");
 		}
-
 		return $result;
 	}
 
@@ -1433,25 +1431,68 @@ function get_prereqs($class_id)
 		WHERE
 			Classes.id=$id
 			;";
-/*
-		if ($program_id != 0)
-		{
-			$query_string = "
-			SELECT
-				Classes.*,
-				Program_Classes.minimum_grade
-			FROM
-				Classes
-				LEFT JOIN Program_Classes ON Program_Classes.class_id=Classes.id
-			WHERE
-				Classes.id=$id
-			;";
-		}
-*/
+		/*
+                if ($program_id != 0)
+                {
+                    $query_string = "
+                    SELECT
+                        Classes.*,
+                        Program_Classes.minimum_grade
+                    FROM
+                        Classes
+                        LEFT JOIN Program_Classes ON Program_Classes.class_id=Classes.id
+                    WHERE
+                        Classes.id=$id
+                    ;";
+                }
+        */
 		$query_result = my_query($query_string, false);
 		return mysqli_fetch_assoc($query_result);
 	}
 
+function get_class_id($name, $program_id=0)
+{
+	if ($name == null || is_numeric($name)) {
+		// Handle invalid $id, perhaps return null or throw an exception
+		return null;
+	}
+	$in_loc=-1;
+	if($name != 'NEW'){
+		for($i =0; $i<strlen($name);$i++){
+			if($name[$i]=='('){
+				$in_loc = $i;
+			}
+		}
+	}
+	if($in_loc != -1){
+		$name = substr($name,0,$in_loc-1);
+	}
+	$query_string = "
+		SELECT
+			id
+		FROM
+			Classes
+		WHERE
+			Classes.name=\"$name\"
+			;";
+	/*
+            if ($program_id != 0)
+            {
+                $query_string = "
+                SELECT
+                    Classes.*,
+                    Program_Classes.minimum_grade
+                FROM
+                    Classes
+                    LEFT JOIN Program_Classes ON Program_Classes.class_id=Classes.id
+                WHERE
+                    Classes.id=$id
+                ;";
+            }
+    */
+	$query_result = my_query($query_string, false);
+	return mysqli_fetch_assoc($query_result);
+}
 	// $result['catalog_year']['catalog_term'] = array of students in the course that term
 	// e.g., "2016 => (1 = > (Joe Smith, Fred Johnson), 3 => (Jane Doe, Fred Johnson))"
 	function get_class_rosters($id)
@@ -2086,7 +2127,7 @@ GROUP BY
 		record_update_student($user_id, $student_id, $note);
 
 		clear_plan($user_id, $student_id);
-
+		//echo('reached');
 		foreach($classes as $class_id => $data)
 		{
 			foreach ($data as $datum)
@@ -2103,7 +2144,6 @@ GROUP BY
 				}
 			}
 		}
-
 		$note = "End Update: <student:$student_id> plan.";
 		record_update_student($user_id, $student_id, $note);
 	}
