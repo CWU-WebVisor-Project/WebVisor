@@ -1,9 +1,6 @@
 .env
 .idea/dataSources.xml
-.idea/php.xml
 vendor/
 g
 changepass.php
 composer.phar
-.idea
-/.idea

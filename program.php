@@ -3,24 +3,14 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<link rel='stylesheet' type='text/css' href='_style.css' />
-    <link href="https://cdn.jsdelivr.net/npm/select2/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js"></script>
-
-    <?php
+<?php
     global $YES;
 	include_once("_html.php");
 	include_once("_sql.php");
-
-    $user_info = get_user_info();
-    if (is_array($user_info)) {
-        $user_id = $user_info['id'];
-        $superuser = is_superuser($user_info);
-    } else {
-        // Handle the error or set default values
-        $user_id = null; // or a default/fallback value
-        $superuser = false; // Assuming false as a default if not a superuser
-    }
+	
+	$user_info = get_user_info();
+    	$user_id = $user_info['id'];
+	$superuser = is_superuser($user_info);
 	
 	if (!$user_info || !$superuser)
 	{
@@ -237,9 +227,9 @@
 	if ($program_id != 0)
 	{
 ?>
-<div, style="display: flex; flex: 1; flex-direction: row">
-<div>
+
 	<h2>Program Information</h2>
+	
 	<table class='input'>
 		<tr>
 			<td>Major &amp; Year:</td>
@@ -340,62 +330,9 @@
 			<td colspan='8'><input type='submit' name='update_program' value='Update Program Info' /></td>
 		</tr>
 	</table>
-	</div>
-	<div style="margin-left: auto; margin-right: auto">
- <h2>Electives</h2>
- <table class='input'>
-
-
-		<tr>
-			<td />
-			<td>Name</td>
-			<td>Sequencing</td>
-			<td>Minimum Grade</td>
-			<td />
-		</tr>
-<?php
 	
-		$row_num = 1;
-		foreach($program_classes as $id => $info)
-		{
-			$name = $info['name_credits'];
-			$min = $info['minimum_grade'];
-			$seqno = $info['sequence_no'];
-			$required = $info['required'];
-			$class='';
-
-			if ($required == $YES)
-			{
-				continue;
-			}
-
-			if (($row_num % 2) == 1)
-			{
-				$class = "class='alt'";
-			}
-			$row_num++;
-?>
-		<tr>
-			<td />
-			<td <?php echo($class); ?>><?php echo($name); ?></td>
-			<td <?php echo($class); ?> align='center'>
-<?php echo(array_menu("\t\t\t\t", $all_seqnos, "seqno-$id", $seqno)); ?>
-			</td>
-			<td <?php echo($class); ?> align='center'>
-<?php echo(array_menu("\t\t\t\t", $all_grades, "grade-$id", $min)); ?>
-			</td>
-
-			<td />
-		</tr>
-<?php
-		}	
-?>
-	</table>
-	</div>
-</div>
-
-<div >
 <h2>Templates</h2>
+	
 	<table class='input'>
 		<tr>
 			<td><input type='submit' name='create_template' value='Create:' /></td>
@@ -426,7 +363,7 @@
 	}
 ?>
 	</table>
-
+	
 <h2>Substitutions</h2>
 	
 	<table class='input'>
@@ -503,7 +440,6 @@
 			</td>
 		</tr>
 	</table>	
-	</div>
 
 </form>
 

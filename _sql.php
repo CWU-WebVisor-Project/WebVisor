@@ -68,95 +68,41 @@ function get_user_info($login = '', $password = '', $setCookies = true)
 	}
 }
 
-	function add_user($id, $login, $password, $name, $program_id, $superuser, $last, $first) {
-
-		global $link;
-		// Assume $mysqli is your MySQLi connection instance from the previous example.
-
-		// Sanitize input (basic example, consider more thorough cleaning depending on context)
-		$login = filter_var($login, FILTER_SANITIZE_STRING);
-		$name = filter_var($name, FILTER_SANITIZE_STRING);
-		$last = filter_var($last, FILTER_SANITIZE_STRING);
-		$first = filter_var($first, FILTER_SANITIZE_STRING);
-		// For 'id', 'program_id', and 'superuser', ensure they are integers or booleans as expected.
-		// Password should be hashed for security reasons, not just sanitized.
-
-		// Hash the password
-		$passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-		// Convert 'superuser' to a more standard boolean/integer representation if needed
-		$superuserValue = $superuser == "Yes" ? "Yes" : "No";
-
-		// Prepare the SQL statement
-		$stmt = $link->prepare("INSERT INTO users (id, login, password, name, program_id, superuser, last, first) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-
-		// Bind parameters to the prepared statement
-		// 'i' denotes integer, 's' denotes string
-		$stmt->bind_param("isssisss", $id, $login, $passwordHash, $name, $program_id, $superuserValue, $last, $first);
-
-		// Execute the prepared statement
-		if ($stmt->execute()) {
-			echo "New user added successfully";
-		} else {
-			echo "Error: " . $stmt->error;
-		}
-		// Close statement and connection
-		$stmt->close();
-	}
 
 function is_superuser($user_info)
-{
-	global $YES;
-	// Check if $user_info is an array and has the 'superuser' key
-	if (is_array($user_info) && isset($user_info['superuser'])) {
+	{
+		global $YES;
 		return ($user_info['superuser'] == $YES);
 	}
-	// Return false or a suitable default if $user_info is not an array or doesn't have 'superuser'
-	return false;
-}
-	function update_user($user_id, $password, $name, $program_id) {
-		global $link; // Assuming $link is your mysqli connection object
 
-		// Initialize the base query
-		$query_string = "UPDATE Users SET password=?, name=?";
-		$types = "ss"; // Types for password and name
-		$params = [$password, $name]; // Parameters array
+	function update_user($user_id, $password, $name, $program_id)
+	{
+		$query_string = "
+			UPDATE
+				Users
+			SET
+				name='$name',
+				program_id=$program_id
+			WHERE
+				id=$user_id
+			;";
+		$query_result = my_query($query_string, false);
 
-		// Check if program_id is valid and should be included in the update
-		if (isset($program_id) && $program_id > 0) {
-			$query_string .= ", program_id=?";
-			$types .= "i"; // Adding integer type for program_id
-			$params[] = $program_id; // Adding program_id to parameters array
+		if ($password != '')
+		{
+			$query_string = "
+				UPDATE
+					Users
+				SET
+					password='$password'
+				WHERE
+					id=$user_id
+			;";
+			$query_result = my_query($query_string, false);
 		}
-
-		$query_string .= " WHERE id=?";
-		$types .= "i"; // Adding integer type for user_id
-		$params[] = $user_id; // Adding user_id to parameters array
-
-		// Prepare the statement
-		$stmt = mysqli_prepare($link, $query_string);
-		if (!$stmt) {
-			echo "Prepare failed: (" . mysqli_errno($link) . ") " . mysqli_error($link);
-			return false;
-		}
-
-		// Dynamically bind parameters
-		mysqli_stmt_bind_param($stmt, $types, ...$params);
-
-		// Execute the query
-		if (!mysqli_stmt_execute($stmt)) {
-			echo "Execute failed: (" . mysqli_stmt_errno($stmt) . ") " . mysqli_stmt_error($stmt);
-			return false;
-		}
-
-		// Close the statement
-		mysqli_stmt_close($stmt);
-
-		return true; // Indicate success
 	}
 
-
-function all_users()
+	function all_users()
 	{
 		$query_string = "
 		SELECT
@@ -834,7 +780,7 @@ function all_users()
 
 	function remove_replacement($program_id, $replaced_id, $replacement_id)
 	{
-		global $link, $user_id;
+		global $link;
 		$query_string = "
 		DELETE FROM Replacement_Classes
 		WHERE
@@ -963,7 +909,6 @@ function all_users()
 
 		if ($changes > 0)
 		{
-			$checklist_id = null;
 			$note = "Updated <checklist:$checklist_id> for <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
@@ -995,7 +940,6 @@ function all_users()
 
 		if (mysqli_affected_rows($link) > 0)
 		{
-			$checklist_id = null;
 			$note = "Added item to <checklist:$checklist_id> for <program:$program_id>.";
 			record_update_program($user_id, $program_id, $note);
 		}
@@ -1340,59 +1284,42 @@ function all_users()
 
 	function update_prereqs($class_id, $prereq_ids, $required_grades)
 	{
-		// Delete existing prerequisites
 		$query_string = "
 		DELETE FROM
 			Prerequisites
 		WHERE
 			class_id=$class_id
 		;";
-		my_query($query_string, false);
+		$query_result = my_query($query_string, false);
 
-		// Ensure $prereq_ids is an array
-		$prereq_ids = (array) $prereq_ids;
+		foreach($prereq_ids as $prereq_id)
+		{
+			$query_string = "
+			INSERT INTO Prerequisites
+				(class_id, prerequisite_id)
+			VALUES
+				($class_id, $prereq_id)
+			;";
+			$query_result = my_query($query_string, false);
+		}
 
-		// Consolidate insert operations
-		foreach($prereq_ids as $prereq_id) {
-			// Check if a grade is specified for this prereq_id
-			$minimum_grade = isset($required_grades[$prereq_id]) ? $required_grades[$prereq_id] : 'NULL';
-
-			// Check if class_id and prereq_id exist in the classes table (pseudo-code)
-			if (check_class_exists($class_id) && check_class_exists($prereq_id)) {
-				// Adjusted query to handle potential NULL minimum_grade
+		foreach ($required_grades as $prereq_id => $minimum_grade)
+		{
+			if ($minimum_grade > 0)
+			{
 				$query_string = "
 				INSERT INTO Prerequisites
 					(class_id, prerequisite_id, minimum_grade)
 				VALUES
 					($class_id, $prereq_id, $minimum_grade)
-				ON DUPLICATE KEY UPDATE
-					minimum_grade = VALUES(minimum_grade)
 				;";
-				my_query($query_string, false);
+
+				$query_result = my_query($query_string, false);
 			}
 		}
 	}
 
-	function check_class_exists($class_id) {
-		// Prepare the SQL query to check if the class_id exists in the classes table
-		$query_string = "SELECT COUNT(*) FROM classes WHERE id = $class_id";
-
-		// Execute the query
-		$query_result = my_query($query_string, false); // Assuming my_query executes the query and returns the result
-
-		// Fetch the result. Assuming my_query returns a mysqli_result object
-		$row = mysqli_fetch_array($query_result);
-
-		// Check if the count is greater than 0, indicating the class_id exists
-		if ($row[0] > 0) {
-			return true; // class_id exists
-		} else {
-			return false; // class_id does not exist
-		}
-	}
-
-
-function get_prereqs($class_id)
+	function get_prereqs($class_id)
 	{
 		$query_string = "
 		SELECT
@@ -1524,7 +1451,7 @@ function get_class_id($name, $program_id=0)
 			{
 				$rosters[$catalog_year] = array();
 			}
-			if (isset($rosters[$catalog_year]) && is_array($rosters[$catalog_year]) && isset($rosters[$catalog_year][$catalog_term]) && !is_array($rosters[$catalog_year][$catalog_term]))
+			if (!is_array($rosters[$catalog_year][$catalog_term]))
 			{
 				$rosters[$catalog_year][$catalog_term] = array();
 			}
@@ -2740,61 +2667,4 @@ ORDER BY
 		return $enrollments;
 	}
 	
-	function get_enrollments_by_program($year, $program_id)
-	{
-		global $YES;
-		$year1 = 10 * $year + 1;
-		$year2 = 10 * $year + 2;
-		$year3 = 10 * $year + 3;
-		$year4 = 10 * $year + 4;
-	
-		$query_string = "
-	SELECT
-		C.id,
-		C.name,
-		SC.term,
-		CONCAT(C.name, ' (', C.credits, ' cr)') AS name_credits,
-		COUNT(SC.student_id) AS enrollment
-	FROM
-		Classes C
-	JOIN
-		Student_Classes SC ON C.id = SC.class_id
-	JOIN
-		Students S ON S.id = SC.student_id
-	JOIN
-		Program_Classes PC ON C.id = PC.class_id
-	WHERE
-		(
-			SC.term = '$year1'
-			OR SC.term = '$year2'
-			OR SC.term = '$year3'
-			OR SC.term = '$year4'
-		)
-		AND S.active = '$YES'
-		AND PC.program_id = '$program_id' -- Filter by program ID
-	GROUP BY
-		C.id, C.name, C.credits, SC.term
-	ORDER BY
-		C.name ASC,
-		SC.term
-	;";
-	
-		$result = my_query($query_string, false);
-		
-		$enrollments = array();
-		while ($row = mysqli_fetch_assoc($result))
-		{
-			$class_id = $row['id'];
-			$term_number = substr($row['term'], -1);
-			if (!isset($enrollments[$class_id]))
-			{
-				$enrollments[$class_id] = array('name' => $row['name_credits'], 'enrollment' => array());
-			}
-			$enrollments[$class_id]['enrollment'][$term_number] = $row['enrollment']; 
-		}
-		
-		return $enrollments;
-	}
-	
-
 ?>
