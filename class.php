@@ -1,16 +1,26 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<link rel='stylesheet' type='text/css' href='_style.css' />
+    <link href="https://cdn.jsdelivr.net/npm/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js"></script>
 <?php
 	
 	include_once("_html.php");
 	include_once("_sql.php");
-				
-	$user_info = get_user_info();
-	$user_id = $user_info['id'];
-	$superuser = is_superuser($user_info);
+    global $YES;
+    $user_info = get_user_info();
+    if (is_array($user_info)) {
+        $user_id = $user_info['id'];
+        $superuser = is_superuser($user_info);
+    } else {
+        // Handle the error or set default values
+        $user_id = null; // or a default/fallback value
+        $superuser = false; // Assuming false as a default if not a superuser
+    }
+
 	
 	if (!$user_info || !$superuser)
 	{
@@ -47,23 +57,45 @@
 		$active = extract_yesno($_POST, 'update_active');
 		
 		update_class($user_id, $class_id, $name, $title, $credits, $fall, $winter, $spring, $summer, $active);
-		
-		$prereq_ids = array();
-		// all the new prerequisites
-		foreach ($_POST as $key => $value)
-		{
-			if ($key == 'update_prereqs')
-			{
-				$prereq_ids[] = $value;
-			}
-			
-			$required_grades = extract_id_values('grade', $_POST);
-		}
-			
-		update_prereqs($user_id, $class_id, $prereq_ids, $required_grades);
+
+        $selectedClassIds = isset($_POST['update_prereqs']) ? (array)$_POST['update_prereqs'] : array();
+
+        // Loop through each selected class ID and add it as a prerequisite
+        foreach ($selectedClassIds as $selectedClassId) {
+            // Assuming $studentClassId and $programId need to be determined or are known
+
+            $minimumGrade = 'C';
+
+            // Call the function to add each prerequisite
+            addPrerequisite($class_id, $selectedClassId, $minimumGrade);
+        }
 	}
-	
-	$all_classes = all_classes();
+
+    function addPrerequisite($classId, $prerequisiteId, $minimumGrade) {
+        global $link; // Assuming $link is your database connection variable
+
+        // Prepare the SQL query to insert the new prerequisite
+        // Note: 'id' is not included in the columns list as it auto-increments
+        $query = "INSERT INTO prerequisites (class_id, prerequisite_id, minimum_grade) VALUES (?, ?, ?)";
+        $stmt = mysqli_prepare($link, $query);
+
+        // Bind parameters to the prepared statement
+        mysqli_stmt_bind_param($stmt, 'iii', $classId, $prerequisiteId, $minimumGrade);
+
+        // Execute the statement and check for success
+        if (mysqli_stmt_execute($stmt)) {
+            //echo "Prerequisite added successfully.";
+        } else {
+            //echo "Error adding prerequisite: " . mysqli_error($link);
+        }
+
+        // Close the prepared statement
+        mysqli_stmt_close($stmt);
+    }
+
+
+
+$all_classes = all_classes();
 	$all_classes_blank = array('0' => '') + $all_classes;
 	$all_credits = all_credits();
 
@@ -210,8 +242,9 @@
 		<tr>
 			<td />
 			<td>
-				<select multiple='multiple' name='update_prereqs'>
-<?php
+                <select multiple='multiple' name='update_prereqs[]'>
+
+                <?php
 		foreach ($all_classes as $id => $name)
 		{
 			if (!array_key_exists($id, $prereqs))
@@ -254,7 +287,7 @@
 		{
 ?>
 <?php
-			if (count($term[$term_number]) > 0)
+            if (isset($term[$term_number]) && is_array($term[$term_number]) && count($term[$term_number]) > 0)
 			{
 ?>
 		<td class='enrolled'>
@@ -266,7 +299,12 @@
 			{
 ?>
 		<td class='empty'>
-					<?php echo(count($term[$term_number])); ?>
+					<?php
+                        if (isset($term[$term_number]) && is_array($term[$term_number]) && count($term[$term_number]) > 0)
+                        {
+                            echo(count($term[$term_number]));
+                        }
+                        ?>
 		</td>
 <?php
 			}
