@@ -23,36 +23,50 @@
 
     if ($user_info) {
         if (isset($_POST['update'])) {
-            $new_password = extract_string($_POST, 'new_pass');
-            $new_password_2 = extract_string($_POST, 'new_pass2');
-            $name = extract_string($_POST, 'advisor');
-            $program_id = extract_int($_POST, 'program_id');
+            $new_password = extract_string($_POST, 'new_pass'); // Ensure this matches the form input name
+            $new_password_2 = extract_string($_POST, 'new_pass2'); // Ensure this matches the form input name
+            $name = extract_string($_POST, 'advisor'); // Ensure this matches the form input name
+            $program_id = extract_int($_POST, 'program_id'); // Ensure this matches the form input name
+            $advisor_name = $user_info['name'];
 
-            if ($new_password === $new_password_2 && !empty($new_password)) {
-                $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
-                $user_id = $user_info['id'];
-                $update_success = update_user($user_id, $hashed_new_password, $name, $program_id);
-
-                if ($update_success) {
-                    $message = "Password updated successfully.";
+            if (!empty($new_password) && !empty($new_password_2)) {
+                if ($new_password === $new_password_2) {
+                    $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
+                    $oneYear = time() + 60 * 60 * 24 * 365;
+                    setcookie('webvisor_password', $new_password, $oneYear);
                     $_SESSION['user_password'] = $hashed_new_password; // Update session with new password if needed
                 } else {
-                    $message = "Failed to update password. Please try again.";
+                    add_message("Passwords do not match. Try again.");
+                    $hashed_new_password = $user_info['password']; // Use the old password if new ones do not match
                 }
             } else {
-                $message = "Passwords do not match or new password is empty.";
+                $hashed_new_password = $user_info['password']; // Use the old password if new ones are empty
+            }
+
+            if (empty($name)) {
+                add_message("Name must not be empty.");
+            } else {
+                $advisor_name = $name;
+            }
+
+            $user_id = $user_info['id'];
+            if (empty($messages)) { // Assuming $messages is an array of error messages added by add_message()
+                $update_success = update_user($user_id, $hashed_new_password, $advisor_name, $program_id);
+                if ($update_success) {
+                    // Re-fetch user info to update session variables
+                    $user_info = get_user_info($login, $hashed_new_password, '', true);
+                    $_SESSION['user_info'] = $user_info; // Update the user_info session variable if needed
+                    // No need to redirect to login page, refresh the current page instead
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                }
             }
         }
 
-        if (is_array($user_info)) {
-            $program_id = $user_info['program_id'];
-            $advisor_name = $user_info['name'];
-        } else {
-            $program_id = null;
-            $advisor_name = '';
-        }
+        $program_id = $user_info['program_id'];
+        $advisor_name = $user_info['name'];
 
-        $all_programs = array('0' => '') + all_programs();
+        $all_programs = array('0' => '') + all_programs(); // Ensure all_programs() function exists and works as expected
     }
     ?>
     <title>Settings</title>
@@ -138,7 +152,7 @@ if (true || $connected) { // Ensure $connected is defined and true to display me
 				<td />
 			</tr>
 <?php
-	}
+    }
 ?>
 		</table>
 

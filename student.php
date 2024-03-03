@@ -683,7 +683,7 @@
                 $slot_name = "$year$term_number-$j";
                 $class_menu = "<span$style$title>".array_menu("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
                 $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $check_elective)."\n" : '';
-                echo("<span style='white-space:nowrap;'>$class_menu$elective_checkbox</span>");
+                echo("<span>$class_menu$elective_checkbox</span>");
 ?>
 				<br />
 <?php
