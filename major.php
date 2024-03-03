@@ -7,10 +7,16 @@
     global $YES;
 	include_once("_html.php");
 	include_once("_sql.php");
-	
-	$user_info = get_user_info();
-	$user_id = $user_info['id'];
-	$superuser = is_superuser($user_info);
+
+    $user_info = get_user_info();
+    if (is_array($user_info)) {
+        $user_id = $user_info['id'];
+        $superuser = is_superuser($user_info);
+    } else {
+        // Handle the error or set default values
+        $user_id = null; // or a default/fallback value
+        $superuser = false; // Assuming false as a default if not a superuser
+    }
 			
 	if (!$user_info || !$superuser)
 	{
