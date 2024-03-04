@@ -126,7 +126,11 @@
 			$matches = array();
 			if (preg_match('/slot-([0-9][0-9][0-9][0-9][0-9])-([0-9])/', $key, $matches))
 			{
-				$class_id = $value;
+                $class_id_pull = get_class_id($value);
+                $class_id = 0;
+                if(!is_null($class_id_pull)){
+                    $class_id = $class_id_pull['id'];
+                }
 				if ($class_id == 0)
 				{
 					continue;
@@ -681,9 +685,9 @@
                 }
 
                 $slot_name = "$year$term_number-$j";
-                $class_menu = "<span$style$title>".array_menu("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
+                $class_menu = "<span$style$title>".auto_text("\t\t\t\t", $all_classes, "slot-$slot_name", $class_id)."</span>";
                 $elective_checkbox = $is_elective ? checkbox("\t\t\t\t", "elective-$slot_name", $check_elective)."\n" : '';
-                echo("<span>$class_menu$elective_checkbox</span>");
+                echo("<span style='white-space:nowrap;'>$class_menu$elective_checkbox</span>");
 ?>
 				<br />
 <?php
@@ -823,6 +827,13 @@
 						//! @todo should order electives by name or date
 						foreach ($electives as $elective_data)
 						{
+                            // fixed bug where unchecking class as elective on student information doesn't reflect change in electives section
+                            if (array_key_exists($elective_data['class_id'], $required_classes)){
+                                if ($elective_credits >0){
+                                    $elective_credits -= $elective_data['credits'];
+                                }
+                                continue;
+                            }
 							$elective_names[] = $elective_data['name'];
 						}
 						$class = "";
@@ -860,7 +871,7 @@
 			{
 ?>
 				<td class='spacer' />
-				<td class='elective'><?php echo($elective_names[$row-1]); ?></td>
+				<td class='elective'><?php if(!empty($elective_names)) { echo($elective_names[$row-1]); } ?></td>
 <?php
 				++$row;
 				$col = 1;
@@ -876,7 +887,7 @@
 			<td />
 			<td />
 			<td class='spacer' />
-			<td class='elective'><?php echo($elective_names[$row-1]); $row++ ?></td>
+			<td class='elective'><?php if(!empty($elective_names)) { echo($elective_names[$row-1]); $row++; }?></td>
 		</tr>
 <?php
 		}

@@ -248,6 +248,42 @@
 		
 		return $result;
 	}
+	function auto_text($prefix, $items, $name, $selected, $id="", $submit=false, $tabindex=""){
+		$dat_list ="$prefix<datalist id='list-$name'\n>";
+		$class_name ="";
+		foreach($items as $value=>$text){
+			if (strcmp($value, $selected) == 0)
+			{
+				$class_name = $text;
+			}
+			$dat_list.= "$prefix\t<option value='$text'>$text</option>\n";
+		}
+		$dat_list .= "$prefix</datalist>\n";
+
+		if ($class_name== ''){
+			$result = "$prefix<input type = 'search' name='$name' id='$name' list= 'list-$name'\n";
+		}else{
+			$result = "$prefix<input type = 'search' name='$name' value='$class_name' id='$id' list= 'list-$name'\n";
+		}
+		if ($submit)
+		{
+			//! @todo need to implement this
+			$result .= " onchange='this.form.submit()'";
+		}
+		else
+		{
+			$result .= " onchange='changed(this)'";
+		}
+		if ($tabindex != "")
+		{
+			$result .= "tabindex='$tabindex'";
+		}
+		$result .= ">\n";
+		$result .= $dat_list;
+		$result .= "</input>";
+		return $result;
+
+	}
 	
 	function checkbox($prefix, $name, $checked)
 	{
