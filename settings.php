@@ -128,6 +128,7 @@ if (true || $connected) { // Ensure $connected is defined and true to display me
                     <input type='password' id='new_pass' name='new_pass' />
                     <button type="button" onclick="togglePasswordVisibility('new_pass')">Show/Hide Password</button>
                 </td>
+                <td></td>
             </tr>
 			<tr>
 				<td>Retype New Password</td>
@@ -135,6 +136,7 @@ if (true || $connected) { // Ensure $connected is defined and true to display me
                     <input type='password' id='new_pass2' name='new_pass2' />
                     <button type="button" onclick="togglePasswordVisibility('new_pass2')">Show/Hide Password</button>
                 </td>
+                <td></td>
 			</tr>
 			<tr>
 				<td>Advisor Name</td>

@@ -19,8 +19,20 @@ span.error select
 {
 	background-color:Red;
 }
+
+span.prereq-error input[type="search"],
+span.prereq-error select
+{
+	background-color:aquamarine;
+
+}
+
+
+
 span.error input[type="search"].changed,
-span.error select.changed
+span.error select.changed,
+span.prereq-error input[type="search"].changed,
+span.prereq-error select.changed
 {
 	background-color:Orange;
 }
@@ -69,7 +81,6 @@ table.input td.replaced
 table
 {
 	border-spacing:0px;
-	background:lightblue;
 }
 
 tr.header td

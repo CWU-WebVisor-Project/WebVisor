@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/select2/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js"></script>
 <?php
-	
 	include_once("_html.php");
 	include_once("_sql.php");
 	
@@ -27,6 +26,7 @@
 	}
 	
 	$all_programs_blank = array(0 => '') + all_programs();
+
 ?>
 </head>
 <body>
@@ -74,11 +74,17 @@
             </select>
         </td>
 		<br />
-		<input type='submit' /> 
+		<input type='submit' />
 	</form>
+    <form method="post" action="export_to_csv.php">
+        <input type="hidden" name="export_csv" value="1"> <!-- Hidden input to trigger CSV export -->
+        <button type="submit">Export to CSV</button>
+    </form>
 	<table>
 		<tr><th>Name</th><th>CWU ID</th><th>Email</th><th>Advisor</th></tr>
-<?php
+
+
+        <?php
 	foreach ($roster as $id => $student_info)
 	{
 		$cwu_id = $student_info['cwu_id'];
@@ -89,6 +95,7 @@
 	}
 ?>
 	</table>
+
 </body>
 </html>
 <script>

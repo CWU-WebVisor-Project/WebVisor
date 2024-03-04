@@ -672,7 +672,12 @@
 				$style = "";
 				$title = "";
                 if ($class_info !== null) {
-                    if ($class_id != 0 && $class_info[$term_name] != $YES) {
+                    //Check for Prereqs
+                    $prereqs_met = prerequisites_scheduled_before_term($class_id, $term_number, $terms);
+                    if (!$prereqs_met) {
+                        $style = " class='prereq-error'"; // Add a CSS class for the blue highlight
+                        $title = "title='Prerequisite not scheduled in previous terms.'";
+                    } elseif ($class_id != 0 && $class_info[$term_name] != $YES) {
                         $style = " class='error'";
                         $title = "title='Class not offered this term.'";
                     }
@@ -986,6 +991,29 @@
 <?php
         }
 	} // if ($student_id != 0)
+
+function prerequisites_scheduled_before_term($class_id, $current_term_number, $terms) {
+    $prerequisites = get_prereqs($class_id); // Assume this function returns a list of prerequisite IDs
+
+    foreach ($prerequisites as $prereq) {
+        $prereq_scheduled = false;
+        // Check if the prerequisite is scheduled in a previous term
+        for ($term = 1; $term < $current_term_number; $term++) {
+            foreach ($terms[$term] as $class) {
+                if ($class['class_id'] == $prereq['prerequisite_id']) {
+                    $prereq_scheduled = true;
+                    break 2; // Break out of both loops
+                }
+            }
+        }
+        // If a prerequisite is not scheduled, return false
+        if (!$prereq_scheduled) {
+            return false;
+        }
+    }
+    return true;
+}
+
 ?>
 
 </form>
