@@ -496,10 +496,12 @@ function all_users()
 			;";
 			$query_result = mysqli_query($link, $query_string);
 
-			$favorite_programs = array(-1 => '-');
+			//$favorite_programs = array(-1 => '-');
+			$favorite_programs = array();
 			while ($row = mysqli_fetch_array($query_result))
 			{
-				$favorite_programs = array($row['program_id'] => $all_programs[$row['program_id']]) + $favorite_programs;
+				$favorite_programs = array($row['program_id'] => $all_programs[$row['program_id']]);
+				//$favorite_programs = array($row['program_id'] => $all_programs[$row['program_id']]) + $favorite_programs;
 			}
 
 			$all_programs = $favorite_programs + $all_programs;
@@ -834,7 +836,7 @@ function all_users()
 		}
 	}
 
-	function remove_replacement($program_id, $replaced_id, $replacement_id)
+	function remove_replacement($user_id, $program_id, $replaced_id, $replacement_id)
 	{
 		global $link, $user_id;
 		$query_string = "

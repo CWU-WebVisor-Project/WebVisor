@@ -69,6 +69,7 @@ table.input td.replaced
 table
 {
 	border-spacing:0px;
+	background:lightblue;
 }
 
 tr.header td
@@ -344,4 +345,9 @@ body.print .tt
 {
 	font-family:monospace;
 	white-space:pre;
+}
+
+.delete {
+	margin-left: -26px; /* Adjust this value as needed to move to the left /
+    display: inline-block; / This makes the margin effect applicable */
 }

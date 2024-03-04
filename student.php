@@ -429,7 +429,7 @@
 ?>
 	<p><a href='student-print.php?cwu_id=<?php echo($cwu_id); ?>&amp;program_id=<?php echo($program_id); ?>'>Printable Copy</a></p>
 <?php
-		}
+
 ?>
 
 	<h2>Key for Color Coding</h2>
@@ -984,6 +984,7 @@
 	</table>
 
 <?php
+        }
 	} // if ($student_id != 0)
 ?>
 

@@ -54,11 +54,9 @@
 		$required_grades = extract_id_values('grade', $_POST); // classes in the system
 		$added_ids = isset($_POST['update_program_classes']) ? $_POST['update_program_classes'] : array(); // classes we just added
 		$deleted_ids = extract_ids('delete', $_POST); // classes we are removing
-		
 		$core_ids = array_keys($required_grades);
 		$core_ids = array_merge($core_ids, $added_ids);
 		$core_ids = array_diff($core_ids, $deleted_ids);
-		
 		$sequence_numbers = extract_id_values('seqno', $_POST);
 
 		$required_ids = extract_ids('required', $_POST);
