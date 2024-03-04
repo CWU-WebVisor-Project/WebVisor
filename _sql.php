@@ -834,7 +834,7 @@ function all_users()
 		}
 	}
 
-	function remove_replacement($program_id, $replaced_id, $replacement_id)
+	function remove_replacement($user_id, $program_id, $replaced_id, $replacement_id)
 	{
 		global $link, $user_id;
 		$query_string = "

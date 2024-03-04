@@ -671,6 +671,7 @@
 				$class_info = get_class_info($class_id);
 				$style = "";
 				$title = "";
+                $check_elective = false;
                 if ($class_info !== null) {
                     if ($class_id != 0 && $class_info[$term_name] != $YES) {
                         $style = " class='error'";
