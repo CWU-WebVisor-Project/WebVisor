@@ -14,6 +14,7 @@ label.checkbox
 	padding: 0px 5px;
 }
 
+
 span.error input[type="search"],
 span.error select
 {
@@ -27,6 +28,11 @@ span.error select.changed
 
 input[type="search"].changed,
 select.changed
+{
+	background-color:Orange;
+}
+
+input[type="search"].changed
 {
 	background-color:Orange;
 }

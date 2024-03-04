@@ -264,6 +264,7 @@
 			$result = "$prefix<input type = 'search' name='$name' id='$name' list= 'list-$name'\n";
 		}else{
 			$result = "$prefix<input type = 'search' name='$name' value='$class_name' id='$id' list= 'list-$name'\n";
+
 		}
 		if ($submit)
 		{
@@ -282,7 +283,6 @@
 		$result .= $dat_list;
 		$result .= "</input>";
 		return $result;
-
 	}
 	
 	function checkbox($prefix, $name, $checked)
