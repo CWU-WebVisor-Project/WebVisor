@@ -211,7 +211,6 @@ function all_users()
 		global $PRINT_SQL;
 		global $EXECUTE_SQL;
 		global $link;
-
 		if ($print || $PRINT_SQL)
 		{
 			add_sql_message("$query_string");
@@ -229,7 +228,6 @@ function all_users()
 			$err_str = mysqli_error($link);
 			add_sql_message("ERROR: $err_no: $err_str");
 		}
-
 		return $result;
 	}
 
@@ -1433,21 +1431,21 @@ function get_prereqs($class_id)
 		WHERE
 			Classes.id=$id
 			;";
-/*
-		if ($program_id != 0)
-		{
-			$query_string = "
-			SELECT
-				Classes.*,
-				Program_Classes.minimum_grade
-			FROM
-				Classes
-				LEFT JOIN Program_Classes ON Program_Classes.class_id=Classes.id
-			WHERE
-				Classes.id=$id
-			;";
-		}
-*/
+		/*
+                if ($program_id != 0)
+                {
+                    $query_string = "
+                    SELECT
+                        Classes.*,
+                        Program_Classes.minimum_grade
+                    FROM
+                        Classes
+                        LEFT JOIN Program_Classes ON Program_Classes.class_id=Classes.id
+                    WHERE
+                        Classes.id=$id
+                    ;";
+                }
+        */
 		$query_result = my_query($query_string, false);
 		return mysqli_fetch_assoc($query_result);
 	}
@@ -2130,7 +2128,7 @@ GROUP BY
 		record_update_student($user_id, $student_id, $note);
 
 		clear_plan($user_id, $student_id);
-
+		//echo('reached');
 		foreach($classes as $class_id => $data)
 		{
 			foreach ($data as $datum)
@@ -2147,7 +2145,6 @@ GROUP BY
 				}
 			}
 		}
-
 		$note = "End Update: <student:$student_id> plan.";
 		record_update_student($user_id, $student_id, $note);
 	}
