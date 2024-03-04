@@ -22,6 +22,7 @@ Before beginning the installation process, ensure you have the following:
 - Xampp or Wamp Server
 - MySQL Server
 - Git
+- PHP Composer
 
 ### Installation
 
