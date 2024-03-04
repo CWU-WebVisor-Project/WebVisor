@@ -14,16 +14,19 @@ label.checkbox
 	padding: 0px 5px;
 }
 
-span.error input[type="search"]
+
+span.error input[type="search"],
+span.error select
 {
 	background-color:Red;
 }
-
+span.error input[type="search"].changed,
 span.error select.changed
 {
 	background-color:Orange;
 }
 
+input[type="search"].changed,
 select.changed
 {
 	background-color:Orange;
