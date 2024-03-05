@@ -572,12 +572,13 @@
 
 </form>
 
+<div class="container">
+    <div class="student-plan-column">
+        <h2>Student Plan</h2>
 <form action='student.php#student_plan' method='post' id='student_plan'>
 	<input type='hidden' name='student_id' value='<?php echo($student_id); ?>' />
 	<input type='hidden' name='program_id' value='<?php echo($program_id); ?>' />
 
-
-<h2>Student Plan</h2>
 	
 	<table class='schedule'>
 <?php
@@ -608,47 +609,35 @@
 			<td colspan='2' />
 		</tr>
 <?php
-	foreach ($classes as $year => $terms)
-	{		
-		if ($year == 0)
-		{
-			continue;
-		}
-        $next_year = $year + 1;
+$errors = [];
+$the_plan = get_plan($student_id, $start_year, $end_year);
+$classes_by_term = $plan['by term'];
+foreach ($classes as $year => $terms) {
+    if ($year == 0) {
+        continue;
+    }
+    $next_year = $year + 1;
+    // Table headers for each term
+    echo "<tr class='header'>";
+    echo "<td>Fall $year</td>";
+    echo "<td>Winter $next_year</td>";
+    echo "<td>Spring $next_year</td>";
+    echo "<td>Summer $next_year</td>";
+    echo "</tr><tr>";
 
-?>	
-		<tr class='header'>
-			<td>Fall <?php echo($year); ?></td>
-			<td>Winter <?php echo($next_year); ?></td>
-			<td>Spring <?php echo($next_year); ?></td>
-			<td>Summer <?php echo($next_year); ?></td>
-		</tr>
-		<tr>
-<?php
+    for ($term_number = 1; $term_number < 5; ++$term_number) {
+        // Determine the term name based on the term_number
+        $term_name = match ($term_number) {
+            1 => 'fall',
+            2 => 'winter',
+            3 => 'spring',
+            4 => 'summer',
+            default => '',
+        };
+        $term_classes = $terms[$term_number];
+        $slots = max(count($term_classes) + 1, 6);
 
-		for($term_number = 1; $term_number < 5; ++$term_number)
-		{
-			if ($term_number == 1)
-			{
-				$term_name = 'fall';
-			}
-			else if ($term_number == 2)
-			{
-				$term_name = 'winter';
-			}
-			else if ($term_number == 3)
-			{
-				$term_name = 'spring';
-			}
-			else if ($term_number == 4)
-			{
-				$term_name = 'summer';
-			}
-			$term_classes = $terms[$term_number];
-			$slots = max(count($term_classes)+1, 6);
-?>
-		<td valign='top'>
-<?php
+        echo "<td valign='top'>";
 /*
     echo "<pre>";
     print_r($classes);
@@ -656,6 +645,7 @@
     print_r($term_classes);
     echo "</pre>";
 */
+
 			$term_credits = 0;
 			for ($j = 0; $j < $slots; ++$j)
 			{
@@ -673,13 +663,28 @@
 				$title = "";
                 if ($class_info !== null) {
                     //Check for Prereqs
-                    $prereqs_met = prerequisites_scheduled_before_term($class_id, $term_number, $terms);
+                    [$prereqs_met, $missing_prereqs] = prerequisites_scheduled_before_term($classes_by_term, $class_id, $year, $term_number, $all_classes);
                     if (!$prereqs_met) {
-                        $style = " class='prereq-error'"; // Add a CSS class for the blue highlight
-                        $title = "title='Prerequisite not scheduled in previous terms.'";
+                        $missing_prereqs_list = implode(', ', $missing_prereqs); // Convert missing prereqs to a comma-separated list
+                        $style = " class='prereq-error'";
+                        $title = " title='Missing prerequisites: $missing_prereqs_list'";
+                        $errors[] = [
+                            'message' => "Missing prerequisites: <strong>$missing_prereqs_list</strong> for <strong>$all_classes[$class_id]</strong>",
+                            'type' => 'missing-prereq'
+                        ];
+
                     } elseif ($class_id != 0 && $class_info[$term_name] != $YES) {
                         $style = " class='error'";
-                        $title = "title='Class not offered this term.'";
+                        $title = " title='Class not offered this term.'";
+                        // When you detect a class not offered error
+                        $errors[] = [
+                            'message' => " <strong>$all_classes[$class_id]</strong> not offered in <strong>$term_name</strong>",
+                            'type' => 'class-not-offered'
+                        ];
+
+                    } else {
+                        $style = "";
+                        $title = "";
                     }
                     $term_credits += $class_info['credits'];
                     $is_elective = $class_id != 0 && !array_key_exists($class_id, $required_classes) && $program_id != 0 && $program_elective_credits > 0 && $student_advisor && key_exists($class_id, get_program_classes($program_id));
@@ -722,8 +727,46 @@
 			<td />
 		</tr>
 	</table>
-	
-</form>
+    </form>
+        <?php
+            foreach($required_classes as $required_id => $info) {
+                $required_name = $info['name_credits'];
+                if (array_key_exists($required_id, $class_ids)) {
+                    continue;
+                } else {
+                    if (isset($replacement_classes[$required_id]) && array_key_exists('replacements', $replacement_classes[$required_id])) {
+                        $replacement_ids = $replacement_classes[$required_id]['replacements'];
+                    } else {
+                        $replacement_ids = array();
+                    }
+                    foreach ($replacement_ids as $replacement_info) {
+                        $replacement_id = $replacement_info['id'];
+                        $replacement_name = $replacement_info['name'];
+                        $replacement_note = $replacement_info['note'];
+                        if (array_key_exists($replacement_id, $class_ids)) {
+                            $errors[] = [
+                                'message' => " <strong>$required_name</strong> Replaced by <strong>$replacement_name</strong>",
+                                'type' => 'class-replaced'
+                            ];
+                        }
+                    }
+                }
+            }
+        ?>
+    </div>
+    <div class="errors-column">
+        <h3>Errors in the Plan:</h3>
+        <div class="error-list">
+           <ul>
+               <?php foreach ($errors as $error) { ?>
+                   <li class="<?php echo htmlspecialchars($error['type']); ?>">
+                       <?php echo $error['message']; ?>
+                   </li>
+               <?php } ?>
+            </ul>
+        </div>
+    </div>
+</div>
 <form action='student.php#program_requirements' method='post' id='program_requirements'>
 	<input type='hidden' name='student_id' value='<?php echo($student_id); ?>' />
 	<input type='hidden' name='program_id' value='<?php echo($program_id); ?>' />
@@ -804,11 +847,11 @@
 							$satisfied = true;
 						}
 					}
-					
+
 					if (!$satisfied)
 					{
 						$class = " class='flagged'";
-						$checkbox = "<input type='checkbox' name='taken-$required_id' /> ";						
+						$checkbox = "<input type='checkbox' name='taken-$required_id' /> ";
 					}
 				}
 ?>
@@ -992,26 +1035,50 @@
         }
 	} // if ($student_id != 0)
 
-function prerequisites_scheduled_before_term($class_id, $current_term_number, $terms) {
-    $prerequisites = get_prereqs($class_id); // Assume this function returns a list of prerequisite IDs
+function prerequisites_scheduled_before_term($classes_by_term, $class_id_to_check, $year_of_class, $term_of_class, $all_classes): array
+{
+    $prerequisites = get_prereqs($class_id_to_check);
+    $missing_prereqs = [];
 
+    // Iterate over each prerequisite to check if it was taken before the class term
     foreach ($prerequisites as $prereq) {
-        $prereq_scheduled = false;
-        // Check if the prerequisite is scheduled in a previous term
-        for ($term = 1; $term < $current_term_number; $term++) {
-            foreach ($terms[$term] as $class) {
-                if ($class['class_id'] == $prereq['prerequisite_id']) {
-                    $prereq_scheduled = true;
-                    break 2; // Break out of both loops
+        $prereq_met = false;
+
+        // Iterate through each year and term up to the year and term of the class
+        foreach ($classes_by_term as $year => $terms) {
+            // If we've reached the year of the class, only iterate up to the term before the class's term
+            $last_term = $year == $year_of_class ? $term_of_class - 1 : 4;
+
+            for ($term = 0; $term <= $last_term; ++$term) {
+                if (isset($terms[$term])) {
+                    foreach ($terms[$term] as $class) {
+                        if ($class['class_id'] == $prereq['prerequisite_id']) {
+                            $prereq_met = true;
+                            break 3; // Exit both loops
+                        }
+                    }
                 }
             }
+
+            // Stop iterating through years once we reach the year of the class
+            if ($year == $year_of_class) {
+                break;
+            }
         }
-        // If a prerequisite is not scheduled, return false
-        if (!$prereq_scheduled) {
-            return false;
+
+        // If prerequisite was not met, add it to the missing prerequisites array
+        if (!$prereq_met) {
+            $missing_prereqs[] = $all_classes[$prereq['prerequisite_id']];
         }
     }
-    return true;
+
+    // If there are missing prerequisites, return false and the list of missing prerequisites
+    if (!empty($missing_prereqs)) {
+        return [false, $missing_prereqs];
+    }
+
+    // All prerequisites met
+    return [true, $missing_prereqs];
 }
 
 ?>

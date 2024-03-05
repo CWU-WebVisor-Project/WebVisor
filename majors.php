@@ -76,10 +76,13 @@
 		<br />
 		<input type='submit' />
 	</form>
+
+<!-- THIS IS THE FORM METHOD TO ADD THE EXPORT BUTTON (FUTURE JAKE or FUTURE GROUPS)
     <form method="post" action="export_to_csv.php">
-        <input type="hidden" name="export_csv" value="1"> <!-- Hidden input to trigger CSV export -->
+        <input type="hidden" name="export_csv" value="1">
         <button type="submit">Export to CSV</button>
     </form>
+-->
 	<table>
 		<tr><th>Name</th><th>CWU ID</th><th>Email</th><th>Advisor</th></tr>
 
